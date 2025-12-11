@@ -1,0 +1,6 @@
+---
+name: require
+globals:
+  require:
+    args:
+      - type: any

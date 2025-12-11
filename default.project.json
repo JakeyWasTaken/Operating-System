@@ -1,0 +1,21 @@
+{
+  "name": "your-project-name",
+  "emitLegacyScripts": false,
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$path": "src/shared"
+    },
+
+    "ServerScriptService": {
+      "$path": "src/server"
+    },
+
+    "StarterPlayer": {
+      "Client": {
+        "$path": "src/client"
+      }
+    }
+  }
+}

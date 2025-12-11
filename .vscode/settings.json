@@ -1,0 +1,22 @@
+{
+  "[luau]": {
+    "editor.defaultFormatter": "JohnnyMorganz.stylua",
+    "editor.formatOnSave": true
+  },
+  "cSpell.words": [
+    "fwdebug",
+    "fwfatal",
+    "fwinfo",
+    "fwwarn",
+    "getmetatable",
+    "Insertable",
+    "metatable",
+    "newindex",
+    "RAFECLASS",
+    "rawget",
+    "rawset",
+    "rbxassetid",
+    "studiocomponents"
+  ],
+  "stylua.targetReleaseVersion": "latest"
+}

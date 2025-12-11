@@ -1,0 +1,6 @@
+﻿build
+.darklua.json
+sourcemap.json
+node_modules
+package-lock.json
+*.env
