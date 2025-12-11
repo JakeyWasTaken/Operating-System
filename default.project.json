@@ -1,5 +1,5 @@
 {
-  "name": "your-project-name",
+  "name": "Operating-System",
   "emitLegacyScripts": false,
   "tree": {
     "$className": "DataModel",

@@ -20,10 +20,10 @@ local _Class = setmetatable({}, {
 			assert(Metatable.__type == "RAFECLASS", "Expected a RAFE class for extends")
 
 			if CREATION_LOG then
-				Log.fwdebug(`Creating class {Name} extending from {tostring(Extends)}`)
+				Log.debug(`Creating class {Name} extending from {tostring(Extends)}`)
 			end
 		elseif CREATION_LOG then
-			Log.fwdebug(`Creating class {Name}`)
+			Log.debug(`Creating class {Name}`)
 		end
 
 		local Meta = setmetatable({}, {
@@ -35,7 +35,7 @@ local _Class = setmetatable({}, {
 				self.Maid = Maid.new()
 				self.__Destroy = function()
 					if CONSTRUCTOR_LOG then
-						Log.fwdebug(`Class {Name} being destroyed`)
+						Log.debug(`Class {Name} being destroyed`)
 					end
 
 					self.Maid:DoCleaning()
@@ -59,7 +59,7 @@ local _Class = setmetatable({}, {
 
 				if Extends and (Extends["new"] or Extends[tostring(Extends)]) then
 					if CONSTRUCTOR_LOG then
-						Log.fwdebug(`Constructing inherited class, origin: [{Name}], extends: [{tostring(Extends)}]`)
+						Log.debug(`Constructing inherited class, origin: [{Name}], extends: [{tostring(Extends)}]`)
 					end
 
 					local Constructor = (Extends["new"] or Extends[tostring(Extends)])
@@ -68,7 +68,7 @@ local _Class = setmetatable({}, {
 					rawset(self, "__inherited", Result)
 					rawset(Result, "__inheritedby", self)
 				elseif CONSTRUCTOR_LOG and Extends ~= nil then
-					Log.fwdebug(`Failed to construct inherited class, origin: [{Name}], extends: [{tostring(Extends)}]`)
+					Log.debug(`Failed to construct inherited class, origin: [{Name}], extends: [{tostring(Extends)}]`)
 				end
 			end,
 			__index = function(self, Index)

@@ -18,5 +18,9 @@
     "rbxassetid",
     "studiocomponents"
   ],
-  "stylua.targetReleaseVersion": "latest"
+  "stylua.targetReleaseVersion": "latest",
+  "luau-lsp.fflags.enableNewSolver": false,
+  "files.exclude": {
+    "build/": true
+  }
 }

@@ -28,7 +28,7 @@ print("Starting server")
 
 repeat
 	task.wait()
-until fs.isDir("./build") and fs.isDir("./build/client") and fs.isDir("./build/shared") and fs.isDir("./build/server")
+until fs.isDir("./build") and fs.isDir("./build/client") and fs.isDir("./build/server")
 
 task.wait()
 
