@@ -1,4 +1,4 @@
 return {
-	FileName = "hello",
+	FileName = "hello.luau",
 	Contents = "hi",
 }

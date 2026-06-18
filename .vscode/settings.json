@@ -19,7 +19,7 @@
     "studiocomponents"
   ],
   "stylua.targetReleaseVersion": "latest",
-  "luau-lsp.fflags.enableNewSolver": false,
+  "luau-lsp.fflags.enableNewSolver": true,
   "files.exclude": {
     "build/": true
   }

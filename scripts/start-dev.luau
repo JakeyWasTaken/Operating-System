@@ -4,7 +4,7 @@ local task = require("@lune/task")
 
 print("Installing packages")
 
-process.spawn("rokit", { "install" }, { stdio = "forward" })
+process.exec("rokit", { "install" }, { stdio = "forward" })
 
 print("Clearing old build")
 
@@ -14,15 +14,15 @@ end
 
 print("Building darklua config")
 
-process.spawn("lune", { "run", "scripts/darkluaconfig" }, { stdio = "forward" })
+process.exec("lune", { "run", "scripts/darkluaconfig" }, { stdio = "forward" })
 
 print("Building vscode aliases")
 
-process.spawn("lune", { "run", "scripts/alias-builder" }, { stdio = "forward" })
+process.exec("lune", { "run", "scripts/alias-builder" }, { stdio = "forward" })
 
 print("Starting darklua watch")
 
-task.spawn(process.spawn, "./dev.bat", {}, { stdio = "forward" })
+task.spawn(process.exec, "./dev.bat", {}, { stdio = "forward" })
 
 print("Starting server")
 
@@ -34,7 +34,7 @@ task.wait()
 
 print("Starting rojo")
 
-process.spawn("rojo", {
+process.exec("rojo", {
 	"serve",
 	"build.project.json",
 }, { stdio = "forward" })

@@ -4,7 +4,7 @@
 # New tools can be added by running `rokit add <tool>` in a terminal.
 
 [tools]
-rojo = "rojo-rbx/rojo@7.4.4"
-darklua = "seaofvoices/darklua@0.16.0"
-lune = "lune-org/lune@0.8.9"
-asphalt = "jackTabsCode/asphalt@0.9.1"
+rojo = "rojo-rbx/rojo@7.6.1"
+darklua = "seaofvoices/darklua@0.19.0"
+lune = "lune-org/lune@0.10.4"
+asphalt = "jackTabsCode/asphalt@2.0.1"
