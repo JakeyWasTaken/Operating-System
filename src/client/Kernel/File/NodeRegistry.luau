@@ -1,4 +1,4 @@
-const Handle = require("@kernel/Core/Handle")
+const Handle = require("@core/Handle")
 
 type Handle = Handle.Handle
 export type NodeType = "File" | "Folder" | "Root"

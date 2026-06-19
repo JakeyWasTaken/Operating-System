@@ -1,4 +1,4 @@
-local Handle = require("@kernel/Core/Handle")
+local Handle = require("@core/Handle")
 
 type Handle = Handle.Handle
 type PID = number

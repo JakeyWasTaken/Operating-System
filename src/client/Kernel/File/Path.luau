@@ -15,8 +15,8 @@ Prefixes:
 
 ]]
 
-const Class = require("@kernel/Core/Class")
-const Log = require("@kernel/Core/Log")
+const Class = require("@core/Class")
+const Log = require("@core/Log")
 const Context = require("@kernel/File/Context")
 
 type PathType = "Home" | "Absolute" | "Relative" | "None"

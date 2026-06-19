@@ -2,14 +2,13 @@
 -- and add rename method
 
 
-const Handle = require("@kernel/Core/Handle")
+const Handle = require("@core/Handle")
 const CPath = require("@kernel/File/Path")
 const Context = require("@kernel/File/Context")
-const Result = require("@kernel/Core/Result")
-const Log = require("@kernel/Core/Log")
+const Result = require("@core/Result")
+const Log = require("@core/Log")
 const NodeRegistry = require("@kernel/File/NodeRegistry")
 const NodeLocks = require("@kernel/File/NodeLocks")
-const NodeInterface = require("@kernel/File/NodeInterface")
 
 -- stylua: ignore
 local FileSystemFolder = game:GetService("StarterPlayer")
@@ -20,6 +19,7 @@ local FileSystemFolder = game:GetService("StarterPlayer")
 type Result<T> = Result.Result<T>
 type CPath = CPath.CPath
 type Context = Context.Context
+type NodeType = NodeRegistry.NodeType
 type Handle = Handle.Handle
 
 local FileSystem = {
@@ -244,8 +244,22 @@ function FileSystem:Read(NodeHandle: Handle): Result<string>
     return Result.new(true, "", Node.Contents)
 end
 
-function FileSystem:Open(NodeHandle: Handle)
+function FileSystem:GetType(NodeHandle: Handle): Result<NodeType>
+    local Node = NodeRegistry.Get(NodeHandle)
+    if not Node then
+        return Result.new(false, `Handle pointed to non-existent node`)
+    end
 
+    return Result.new(true, "", Node.Type)
+end
+
+function FileSystem:GetName(NodeHandle: Handle): Result<string>
+    local Node = NodeRegistry.Get(NodeHandle)
+    if not Node then
+        return Result.new(false, `Handle pointed to non-existent node`)
+    end
+
+    return Result.new(true, "", Node.Name)
 end
 
 return FileSystem
