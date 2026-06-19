@@ -35,6 +35,8 @@ export type CPath = {
 	IsValid: (self: CPath) -> boolean,
 
 	--- Returns nil if invalid or no extension is present
+    ---
+    --- Having an extension does not mean this path is a file within the file system
 	GetExtension: (self: CPath) -> string?,
 
 	GetPathType: (self: CPath) -> PathType,
@@ -141,15 +143,6 @@ function CPath:GetExtension()
     end
 
     return LastNode.Name:reverse():sub(1, Start - 1):reverse()
-end
-
-function CPath:GetType()
-    if not self:IsValid() then
-        return nil
-    end
-
-    local HasExtension = self:GetExtension() ~= nil
-    return HasExtension and "File" or "Folder"
 end
 
 function CPath:GetPathType()

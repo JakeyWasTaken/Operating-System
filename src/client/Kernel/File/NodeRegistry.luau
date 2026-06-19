@@ -20,9 +20,9 @@ export type Node = {
 -- Set mode so if we mess up some destruction stuff we wont memory leak
 local Registry: { [Handle]: Node? } = setmetatable({}, { __mode = "v" }) :: any
 
-local NodeFactory = {}
+local NodeRegistry = {}
 
-function NodeFactory.new(): Node
+function NodeRegistry.Create(): Node
 	local Node = {
 		Handle = Handle(),
 		Type = "Root",
@@ -42,11 +42,11 @@ function NodeFactory.new(): Node
 	return Node
 end
 
-function NodeFactory.Get(Handle: Handle.Handle)
+function NodeRegistry.Get(Handle: Handle.Handle)
     return Registry[Handle]
 end
 
-function NodeFactory.Move(ChildHandle: Handle.Handle, ParentHandle: Handle.Handle)
+function NodeRegistry.Move(ChildHandle: Handle.Handle, ParentHandle: Handle.Handle)
     local ChildNode, ParentNode = Registry[ChildHandle], Registry[ParentHandle]
     if not ChildNode or not ParentNode then
         return false
@@ -74,7 +74,7 @@ function NodeFactory.Move(ChildHandle: Handle.Handle, ParentHandle: Handle.Handl
     return true
 end
 
-function NodeFactory.Delete(Handle: Handle.Handle)
+function NodeRegistry.Delete(Handle: Handle.Handle)
     local Node = Registry[Handle]
     if not Node then
         return false
@@ -90,11 +90,11 @@ function NodeFactory.Delete(Handle: Handle.Handle)
 
     for i = #Node.Children, 1, -1 do
         local Child = Node.Children[i]
-        NodeFactory.Delete(Child.Handle)
+        NodeRegistry.Delete(Child.Handle)
     end
 
     Registry[Handle] = nil
     return true
 end
 
-return NodeFactory
+return NodeRegistry

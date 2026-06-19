@@ -7,7 +7,9 @@ const CPath = require("@kernel/File/Path")
 const Context = require("@kernel/File/Context")
 const Result = require("@kernel/Core/Result")
 const Log = require("@kernel/Core/Log")
-const NodeFactory = require("@kernel/File/NodeFactory")
+const NodeRegistry = require("@kernel/File/NodeRegistry")
+const NodeLocks = require("@kernel/File/NodeLocks")
+const NodeInterface = require("@kernel/File/NodeInterface")
 
 -- stylua: ignore
 local FileSystemFolder = game:GetService("StarterPlayer")
@@ -22,10 +24,12 @@ type Handle = Handle.Handle
 
 local FileSystem = {
     m_Initialized = false,
-    m_RootNode = NodeFactory.Create()
+    m_RootNode = NodeRegistry.Create()
 }
 
-function FileSystem.GetInstance(self: typeof(FileSystem))
+function FileSystem:GetInstance()
+    self = self :: typeof(FileSystem)
+
     if self.m_Initialized then
         return self
     end
@@ -61,7 +65,9 @@ function FileSystem.GetInstance(self: typeof(FileSystem))
     return self
 end
 
-function FileSystem.Create(self: typeof(FileSystem), Path: CPath, Type: "Folder" | "File", Context: Context): Result<Handle>
+function FileSystem:Create(Path: CPath, Type: "Folder" | "File", Context: Context): Result<Handle>
+    self = self :: typeof(FileSystem)
+
     if not self.m_Initialized then
         return Result.new(false, "File System was not initialized")
     end
@@ -71,20 +77,20 @@ function FileSystem.Create(self: typeof(FileSystem), Path: CPath, Type: "Folder"
     end
 
     local PathAbsoluteStr = Path:ToStringAbsolute(Context)
-    local AbsolutePath: CPath? = PathAbsoluteStr ~= "" and CPath.new(PathAbsoluteStr)
+    local AbsolutePath = PathAbsoluteStr ~= "" and CPath.new(PathAbsoluteStr) or nil
     if not AbsolutePath or not AbsolutePath:IsValid() then
         return Result.new(false, "Unable to convert path to absolute")
     end
 
     local PathNodes = AbsolutePath:GetNodes()
-    local CurrentNode: NodeFactory.Node = self.m_RootNode
+    local CurrentNode = self.m_RootNode
 
     for i, PathNode in PathNodes do
         if PathNode.Type == "Escape" then
             if CurrentNode.Parent == nil then
                 return Result.new(false, "Cannot escape orphaned node")
             else
-                CurrentNode = NodeFactory.Get(CurrentNode.Parent)
+                CurrentNode = NodeRegistry.Get(CurrentNode.Parent)
                 if not CurrentNode then
                     return Result.new(false, "Parent handle pointed to non-existent node")
                 end
@@ -92,7 +98,7 @@ function FileSystem.Create(self: typeof(FileSystem), Path: CPath, Type: "Folder"
         end
 
         for _, ChildHandle in CurrentNode.Children do
-            local ChildNode = NodeFactory.Get(ChildHandle)
+            local ChildNode = NodeRegistry.Get(ChildHandle)
             if not ChildNode then
                 return Result.new(false, "Child handle pointed to non-existent node")
             end
@@ -106,11 +112,11 @@ function FileSystem.Create(self: typeof(FileSystem), Path: CPath, Type: "Folder"
         -- No child node exists, create one
         local IsLastNode = i == #PathNodes
 
-        local Node = NodeFactory.Create()
+        local Node = NodeRegistry.Create()
         Node.Type = IsLastNode and Type or "Folder"
         Node.Name = PathNode.Name
 
-        NodeFactory.Move(Node.Handle, CurrentNode.Handle)
+        NodeRegistry.Move(Node.Handle, CurrentNode.Handle)
 
         CurrentNode = Node
     end
@@ -118,7 +124,9 @@ function FileSystem.Create(self: typeof(FileSystem), Path: CPath, Type: "Folder"
     return Result.new(true, "", CurrentNode.Handle)
 end
 
-function FileSystem.Resolve(self: typeof(FileSystem), Path: CPath, Context: Context): Result<Handle>
+function FileSystem:Resolve(Path: CPath, Context: Context): Result<Handle>
+    self = self :: typeof(FileSystem)
+
     if not self.m_Initialized then
         return Result.new(false, "File System was not initialized")
     end
@@ -128,20 +136,20 @@ function FileSystem.Resolve(self: typeof(FileSystem), Path: CPath, Context: Cont
     end
 
     local PathAbsoluteStr = Path:ToStringAbsolute(Context)
-    local AbsolutePath: CPath? = PathAbsoluteStr ~= "" and CPath.new(PathAbsoluteStr)
+    local AbsolutePath: CPath? = PathAbsoluteStr ~= "" and CPath.new(PathAbsoluteStr) or nil
     if not AbsolutePath or not AbsolutePath:IsValid() then
         return Result.new(false, "Unable to convert path to absolute")
     end
 
     local PathNodes = AbsolutePath:GetNodes()
-    local CurrentNode: NodeFactory.Node = self.m_RootNode
+    local CurrentNode = self.m_RootNode
 
     for i, PathNode in PathNodes do
         if PathNode.Type == "Escape" then
             if CurrentNode.Parent == nil then
                 return Result.new(false, "Cannot escape orphaned node")
             else
-                CurrentNode = NodeFactory.Get(CurrentNode.Parent)
+                CurrentNode = NodeRegistry.Get(CurrentNode.Parent)
                 if not CurrentNode then
                     return Result.new(false, "Parent handle pointed to non-existent node")
                 end
@@ -149,7 +157,7 @@ function FileSystem.Resolve(self: typeof(FileSystem), Path: CPath, Context: Cont
         end
 
         for _, ChildHandle in CurrentNode.Children do
-            local ChildNode = NodeFactory.Get(ChildHandle)
+            local ChildNode = NodeRegistry.Get(ChildHandle)
             if not ChildNode then
                 return Result.new(false, "Child handle pointed to non-existent node")
             end
@@ -167,19 +175,44 @@ function FileSystem.Resolve(self: typeof(FileSystem), Path: CPath, Context: Cont
     return Result.new(true, "", CurrentNode.Handle)
 end
 
-function FileSystem.Move(self: typeof(FileSystem), ChildHandle: Handle, ParentHandle: Handle)
-    NodeFactory.Move(ChildHandle, ParentHandle)
+function FileSystem:Move(ChildHandle: Handle, ParentHandle: Handle)
+    NodeRegistry.Move(ChildHandle, ParentHandle)
 end
 
-function FileSystem.Delete(self: typeof(FileSystem), NodeHandle: Handle)
-    -- TODO: need to built an array of everything that will be deleted
-    -- then check if its locked or not
+function FileSystem:Delete(NodeHandle: Handle): Result<nil>
+    local Node = NodeRegistry.Get(NodeHandle)
+    if not Node then
+        return Result.new(false, "Handle pointed to non-existent node")
+    end
 
-    NodeFactory.Delete(NodeHandle)
+    local Handles = { NodeHandle }
+
+    local function GetChildren(Node)
+        for _, ChildHandle in Node.Children do
+            local ChildNode = NodeRegistry.Get(ChildHandle)
+            if not ChildNode then
+                continue
+            end
+
+            table.insert(Handles, ChildHandle)
+            GetChildren(ChildNode)
+        end
+    end
+
+    GetChildren(Node)
+
+    for _, Handle in Handles do
+        if NodeLocks.IsLocked(Handle) then
+            return Result.new(false, "Node locked")
+        end
+    end
+
+    NodeRegistry.Delete(NodeHandle)
+    return Result.new(true, "")
 end
 
-function FileSystem.Write(self: typeof(FileSystem), NodeHandle: Handle, Contents: string): Result<nil>
-    local Node = NodeFactory.Get(NodeHandle)
+function FileSystem:Write(NodeHandle: Handle, Contents: string): Result<nil>
+    local Node = NodeRegistry.Get(NodeHandle)
     if not Node then
         return Result.new(false, `Handle pointed to non-existent node`)
     end
@@ -188,14 +221,18 @@ function FileSystem.Write(self: typeof(FileSystem), NodeHandle: Handle, Contents
         return Result.new(false, "Cannot write to non-file")
     end
 
+    if NodeLocks.IsLocked(NodeHandle) then
+        return Result.new(false, "Node locked")
+    end
+
     Node.Contents = Contents
     Node.UpdatedAt = os.clock()
 
     return Result.new(true, "")
 end
 
-function FileSystem.Read(self: typeof(FileSystem), NodeHandle: Handle): Result<string>
-    local Node = NodeFactory.Get(NodeHandle)
+function FileSystem:Read(NodeHandle: Handle): Result<string>
+    local Node = NodeRegistry.Get(NodeHandle)
     if not Node then
         return Result.new(false, `Handle pointed to non-existent node`)
     end
@@ -205,6 +242,10 @@ function FileSystem.Read(self: typeof(FileSystem), NodeHandle: Handle): Result<s
     end
 
     return Result.new(true, "", Node.Contents)
+end
+
+function FileSystem:Open(NodeHandle: Handle)
+
 end
 
 return FileSystem
