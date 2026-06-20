@@ -1,0 +1,158 @@
+type userdata = any
+export type Macros = {
+	-- Type tags
+	LUA_TNIL: number,
+	LUA_TBOOLEAN: number,
+	LUA_TLIGHTuserdata: number,
+	LUA_TNUMBER: number,
+	LUA_TVECTOR: number,
+	LUA_TSTRING: number,
+	LUA_TTABLE: number,
+	LUA_TFUNCTION: number,
+	LUA_Tuserdata: number,
+	LUA_TTHREAD: number,
+	LUA_TBUFFER: number,
+	LUA_TPROTO: number,
+	LUA_TUPVAL: number,
+	LUA_TDEADKEY: number,
+	LUA_T_COUNT: number,
+
+	-- Status codes
+	LUA_OK: number,
+	LUA_YIELD: number,
+	LUA_ERRRUN: number,
+	LUA_ERRSYNTAX: number,
+	LUA_ERRMEM: number,
+	LUA_ERRERR: number,
+	LUA_BREAK: number,
+
+	-- Coroutine states
+	LUA_CORUN: number,
+	LUA_COSUS: number,
+	LUA_CONOR: number,
+	LUA_COFIN: number,
+	LUA_COERR: number,
+
+	-- GC options
+	LUA_GCSTOP: number,
+	LUA_GCRESTART: number,
+	LUA_GCCOLLECT: number,
+	LUA_GCCOUNT: number,
+	LUA_GCCOUNTB: number,
+	LUA_GCISRUNNING: number,
+	LUA_GCSTEP: number,
+	LUA_GCSETGOAL: number,
+	LUA_GCSETSTEPMUL: number,
+	LUA_GCSETSTEPSIZE: number,
+
+	-- Limits and sizes
+	LUA_IDSIZE: number,
+	LUA_MINSTACK: number,
+	LUAI_MAXCSTACK: number,
+	LUAI_MAXCALLS: number,
+	LUAI_MAXCCALLS: number,
+	LUA_BUFFERSIZE: number,
+	LUA_UTAG_LIMIT: number,
+	LUA_LUTAG_LIMIT: number,
+	LUA_SIZECLASSES: number,
+	LUA_MEMORY_CATEGORIES: number,
+	LUA_MINSTRTABSIZE: number,
+	LUA_MAXCAPTURES: number,
+	LUA_VECTOR_SIZE: number,
+	LUA_EXTRA_SIZE: number,
+	LUA_MULTRET: number,
+	LUA_REGISTRYINDEX: number,
+	LUA_ENVIRONINDEX: number,
+	LUA_GLOBALSINDEX: number,
+	LUA_TNONE: number,
+	LUA_NOREF: number,
+	LUA_REFNIL: number,
+
+	-- Library name strings
+	LUA_COLIBNAME: string,
+	LUA_TABLIBNAME: string,
+	LUA_OSLIBNAME: string,
+	LUA_STRLIBNAME: string,
+	LUA_BITLIBNAME: string,
+	LUA_BUFFERLIBNAME: string,
+	LUA_UTF8LIBNAME: string,
+	LUA_MATHLIBNAME: string,
+	LUA_DBLIBNAME: string,
+	LUA_VECLIBNAME: string,
+
+	-- Functions
+	lua_upvalueindex: (i: number) -> number,
+	lua_ispseudo: (i: number) -> number,
+	lua_getref: (L: userdata, ref: number) -> number,
+	lua_tonumberx: (L: userdata, i: number) -> number,
+	lua_tointegerx: (L: userdata, i: number) -> number,
+	lua_tounsigned: (L: userdata, i: number) -> number,
+	lua_pop: (L: userdata, n: number) -> (),
+	lua_newtable: (L: userdata) -> (),
+	lua_newuserdata: (L: userdata, s: number) -> userdata,
+	lua_strlen: (L: userdata, i: number) -> number,
+	lua_isfunction: (L: userdata, n: number) -> number,
+	lua_istable: (L: userdata, n: number) -> number,
+	lua_islightuserdata: (L: userdata, n: number) -> number,
+	lua_isnil: (L: userdata, n: number) -> number,
+	lua_isboolean: (L: userdata, n: number) -> number,
+	lua_isvector: (L: userdata, n: number) -> number,
+	lua_isthread: (L: userdata, n: number) -> number,
+	lua_isbuffer: (L: userdata, n: number) -> number,
+	lua_isnone: (L: userdata, n: number) -> number,
+	lua_isnoneornil: (L: userdata, n: number) -> number,
+	lua_pushcfunction: (L: userdata, fn: (userdata) -> number, debugname: string) -> (),
+	lua_pushcclosure: (L: userdata, fn: (userdata) -> number, debugname: string, nup: number) -> (),
+	lua_pushlightuserdata: (L: userdata, p: userdata) -> (),
+	lua_setglobal: (L: userdata, s: string) -> (),
+	lua_getglobal: (L: userdata, s: string) -> number,
+	lua_tostring: (L: userdata, i: number) -> string,
+	lua_pushfstring: (L: userdata, fmt: string, ...any) -> string,
+	luaL_error: (L: userdata, fmt: string, ...any) -> number,
+	luaL_typeerror: (L: userdata, narg: number, tname: string) -> number,
+	luaL_argerror: (L: userdata, narg: number, extramsg: string) -> number,
+	luaL_argcheck: (L: userdata, cond: number, arg: number, extramsg: string) -> number,
+	luaL_argexpected: (L: userdata, cond: number, arg: number, tname: string) -> number,
+	luaL_checkstring: (L: userdata, n: number) -> string,
+	luaL_optstring: (L: userdata, n: number, d: string) -> string,
+	luaL_getmetatable: (L: userdata, n: string) -> number,
+	luaL_addstring: (B: userdata, s: string) -> (),
+}
+
+export type LuauCeptionCompiler = {
+	luau_compile: (src: string, optLevel: number?, dbgLevel: number?, typInfLevel: number?, covLevel: number?) -> (string, number),
+	luau_setflag: (name: string, state: boolean) -> (),
+	luau_setallflags: (state: boolean) -> (),
+	luau_resetflags: () -> (),
+	macros: Macros,
+}
+
+export type luau_settings = {
+	vectorCtor: () -> (),
+	vectorSize: number,
+	useNativeNamecall: boolean,
+	namecallHandler: () -> (),
+	extensions: {},
+	callHooks: {
+		panicHook: (...any) -> (),
+	},
+	errorHandling: boolean,
+	generalizedIteration: boolean,
+	staticEnvironment: boolean,
+	useImportConstants: boolean,
+	decodeOp: (op: number) -> number,
+}
+
+export type Fiu = {
+	luau_newsettings: () -> luau_settings,
+	luau_validatesettings: ({ [string]: any }) -> (),
+	luau_deserialize: (bytecode: string, luau_settings: luau_settings) -> (),
+	luau_load: (bytecode: string, env: { [string]: any }, luau_settings: luau_settings) -> (() -> ...any, () -> ()),
+	luau_getcoverage: (
+		module: any,
+		protoid: number,
+		callback: (proto_debugname: string, proto_linedefined: number, proto_depth: number, hit_buffer: number, max_line: number) -> ()
+	) -> (),
+}
+
+return true

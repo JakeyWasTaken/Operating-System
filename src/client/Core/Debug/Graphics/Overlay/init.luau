@@ -1,8 +1,8 @@
 -- --- @class grOverlay
 -- --- [Find the docs here](https://jakeywastaken.github.io/CeiveImOverlay/api/ImOverlay)
 
-local DebugGui = require("@kernel/Core/Debug/DebugGui")
-local ImOverlay = require("@kernel/Core/Debug/Graphics/Overlay/ImOverlay")
+local DebugGui = require("@core/Debug/DebugGui")
+local ImOverlay = require("@core/Debug/Graphics/Overlay/ImOverlay")
 
 local MainOverlay
 if _G.DEV then

@@ -3,6 +3,7 @@
 return {
 	["kernel"] = "src/client/Kernel",
 	["core"] = "src/client/Core",
+	["vendor"] = "vendor",
 	["client"] = "src/client",
 	["shared"] = "src/shared",
 	["server"] = "src/server",

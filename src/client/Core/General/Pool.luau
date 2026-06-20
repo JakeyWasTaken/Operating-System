@@ -1,4 +1,4 @@
-local Log = require("@kernel/Core/Log")
+local Log = require("@core/Log")
 
 local Class = {}
 Class.Pool = {}

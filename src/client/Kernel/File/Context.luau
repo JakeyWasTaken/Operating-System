@@ -7,8 +7,15 @@ local Context = {}
 
 function Context.new(): Context
 	return {
-		WorkingDirectory = "home",
-		HomeDirectory = "home",
+		WorkingDirectory = "/",
+		HomeDirectory = "/home",
+	}
+end
+
+function Context.Copy(Context: Context): Context
+	return {
+		WorkingDirectory = Context.WorkingDirectory,
+		HomeDirectory = Context.HomeDirectory,
 	}
 end
 

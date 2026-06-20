@@ -1,44 +1,16 @@
-const FileSystem = require("@kernel/File/FileSystem")
+require("@kernel/File/FileSystem"):Initialize()
+
+const TableExplorer = require("@core/Debug/Graphics/TableExplorer")
+TableExplorer.AddTable("NodeRegistry", require("@kernel/File/NodeRegistry").GetRegistry())
+
+const ProcessFactory = require("@kernel/Process/ProcessFactory")
+const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
 const CPath = require("@kernel/File/Path")
 const Context = require("@kernel/File/Context")
 
-print(FileSystem:GetInstance():Create(CPath.new("/hello/world/test.exe", Context.new())))
+game:GetService("RunService").Heartbeat:Connect(function()
+    ProcessScheduler.Tick()
+end)
 
--- local FileSystem = require("@kernel/FileSystem"):GetInstance()
-
--- print(FileSystem:Resolve("/").Value:ListChildren())
-
--- local CPath = require("@kernel/File/Path")
-
--- local function Test(str: string)
--- 	local path = CPath.new(str)
-
--- 	print("----------")
-
--- 	print(path:IsValid())
--- 	print(path:GetExtension())
--- 	print(path:GetType())
--- 	print(path:GetPathType())
--- 	print(path:ToString())
--- 	print(path:ToStringAbsolute(require("@kernel/File/Context").new()))
--- end
-
--- Test("~/Test")
--- Test("~/")
--- Test("~")
--- Test("~/Test/Cool.exe")
--- Test("./Test")
--- Test("./")
--- Test(".")
--- Test("./Test/Cool.exe")
--- Test(".../Test")
--- Test(".../")
--- Test("...")
--- Test(".../Test/Cool.exe")
--- Test("/Test")
--- Test("/")
--- Test("")
--- Test("/Test/Cool.exe")
--- Test("Test")
--- Test("Test/Cool.exe")
--- Test(".minecraft/minecraft.exe")
+local Result = ProcessFactory.CreateProcess(CPath.new("/tests/vm/runConformance.luau"), Context.new())
+assert(Result.Success, Result.Reason)

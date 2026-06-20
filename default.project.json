@@ -14,7 +14,13 @@
 
     "StarterPlayer": {
       "Client": {
-        "$path": "src/client"
+        "$path": "src/client",
+        "vendor": {
+          "$path": "vendor"
+        },
+        "Static": {
+          "$path": "static-build"
+        }
       }
     }
   }

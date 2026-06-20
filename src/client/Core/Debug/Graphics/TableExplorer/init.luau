@@ -1,6 +1,6 @@
-local DebugGui = require("@kernel/Core/Debug/DebugGui")
-local Log = require("@kernel/Core/Log")
-local TableExplorerClass = require("@kernel/Core/Debug/Graphics/TableExplorer/TableExplorer")
+local DebugGui = require("@core/Debug/DebugGui")
+local Log = require("@core/Log")
+local TableExplorerClass = require("@core/Debug/Graphics/TableExplorer/TableExplorer")
 local TableExplorer
 
 if _G.DEV then

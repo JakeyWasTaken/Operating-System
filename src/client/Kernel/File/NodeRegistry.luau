@@ -18,7 +18,7 @@ export type Node = {
 }
 
 -- Set mode so if we mess up some destruction stuff we wont memory leak
-local Registry: { [Handle]: Node? } = setmetatable({}, { __mode = "v" }) :: any
+local Registry: { [Handle]: Node? } = {}
 
 local NodeRegistry = {}
 
@@ -46,6 +46,10 @@ function NodeRegistry.Get(Handle: Handle.Handle)
     return Registry[Handle]
 end
 
+function NodeRegistry.GetRegistry()
+    return Registry
+end
+
 function NodeRegistry.Move(ChildHandle: Handle.Handle, ParentHandle: Handle.Handle)
     local ChildNode, ParentNode = Registry[ChildHandle], Registry[ParentHandle]
     if not ChildNode or not ParentNode then
@@ -60,7 +64,7 @@ function NodeRegistry.Move(ChildHandle: Handle.Handle, ParentHandle: Handle.Hand
         return false
     end
 
-    local OldParent = ChildNode.Parent
+    local OldParent = ChildNode.Parent and Registry[ChildNode.Parent]
     if OldParent then
         local Index = table.find(OldParent.Children, ChildHandle)
         if Index then

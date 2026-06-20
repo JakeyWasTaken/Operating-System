@@ -1,4 +1,4 @@
-local Context = require("@kernel/Core/General/Context")
+local Context = require("@core/General/Context")
 if Context.IsServer then
 	error("Cannot be required from the server")
 end

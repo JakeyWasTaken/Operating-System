@@ -24,11 +24,19 @@ type PathNode = { Type: "Escape" } | { Type: "Step", Name: string }
 
 export type CPath = {
 	new: (String: string) -> CPath,
+    ValidateStrings: (Strings: {string}) -> boolean,
+    ValidateContext: (Context: Context.Context) -> boolean,
+
 	-- --------------------------------- Methods -------------------------------- --
 
 	ToString: (self: CPath) -> string,
     --- Given context will return a path that is always absolute
     ToStringAbsolute: (self: CPath, Context: Context.Context) -> string,
+
+    --- Returns a new path with the provided string appended
+    Append: (self: CPath, String: string) -> CPath,
+    --- Returns a new path pointing to the parent
+    GetParent: (self: CPath) -> CPath,
 
     --- This does not check if the path points to anything, simply if the path itself
     --- resolved to something
@@ -44,8 +52,6 @@ export type CPath = {
     GetNodes: (self: CPath) -> { PathNode },
 
 	m_ParseString: (self: CPath, String: string) -> (),
-
-	Destroy: (self: CPath) -> (),
 
 	-- --------------------------------- Members -------------------------------- --
 
@@ -65,6 +71,21 @@ function CPath.new(String: string)
 	self:m_ParseString(String)
 
 	return self
+end
+
+function CPath.ValidateStrings(Strings: {string})
+    for _, String in Strings do
+        local Path = CPath.new(String)
+        if not Path:IsValid() then
+            return false
+        end
+    end
+
+    return true
+end
+
+function CPath.ValidateContext(Context: Context.Context)
+    return CPath.ValidateStrings({ Context.HomeDirectory, Context.WorkingDirectory })
 end
 
 function CPath:ToString()
@@ -123,6 +144,63 @@ function CPath:ToStringAbsolute(Context: Context.Context)
     return table.concat(Steps, "\\")
 end
 
+function CPath:Append(String: string)
+    return CPath.new(`{self:ToString()}\\{String}`)
+end
+
+function CPath:GetParent()
+    if not self:IsValid() then
+        return CPath.new("")
+    end
+
+    -- Absolute root has no parent — clamp
+    if self.m_PathType == "Absolute" and #self.m_Nodes == 0 then
+        return self
+    end
+
+    local LastNode = self.m_Nodes[#self.m_Nodes]
+
+    -- No nodes left on a Home/Relative path — must escape upward
+    if LastNode == nil then
+        return CPath.new(`{self:ToString()}\\..`)
+    end
+
+    -- Last node is already an Escape — stack another (Relative/Home only;
+    -- Absolute can't go above root so clamp)
+    if LastNode.Type == "Escape" then
+        if self.m_PathType == "Absolute" then
+            return self
+        end
+        return CPath.new(`{self:ToString()}\\..`)
+    end
+
+    -- General case: drop the last Step node
+    local Steps = {}
+
+    if self.m_PathType == "Absolute" then
+        table.insert(Steps, "")
+    elseif self.m_PathType == "Home" then
+        table.insert(Steps, "~")
+    elseif self.m_PathType == "Relative" then
+        table.insert(Steps, ".")
+    end
+
+    for i = 1, #self.m_Nodes - 1 do
+        local Node = self.m_Nodes[i]
+        if Node.Type == "Escape" then
+            table.insert(Steps, "..")
+        else
+            table.insert(Steps, Node.Name)
+        end
+    end
+
+    if self.m_PathType == "Absolute" and #self.m_Nodes == 1 then
+        return CPath.new("\\")
+    end
+
+    return CPath.new(table.concat(Steps, "\\"))
+end
+
 function CPath:IsValid()
     return self.m_PathType ~= "None"
 end
@@ -154,6 +232,10 @@ function CPath:GetNodes()
 end
 
 function CPath:m_ParseString(String: string)
+    if #String == 0 then
+        return
+    end
+
     const Corrected = String:gsub("/", "\\")
     local Split = Corrected:split("\\")
 
@@ -218,10 +300,6 @@ function CPath:m_ParseString(String: string)
     end
 
     return
-end
-
-function CPath:Destroy()
-	self:_Destroy()
 end
 
 return CPath

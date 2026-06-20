@@ -9,13 +9,14 @@ const Result = require("@core/Result")
 const Log = require("@core/Log")
 const NodeRegistry = require("@kernel/File/NodeRegistry")
 const NodeLocks = require("@kernel/File/NodeLocks")
+const Signal = require("@core/Signal")
 
 -- stylua: ignore
 local FileSystemFolder = game:GetService("StarterPlayer")
 							:FindFirstChild("Client")
 							:FindFirstChild("Static")
-							:FindFirstChild("FileSystem")
 
+type Signal<T...> = Signal.Signal<T...>
 type Result<T> = Result.Result<T>
 type CPath = CPath.CPath
 type Context = Context.Context
@@ -23,11 +24,15 @@ type NodeType = NodeRegistry.NodeType
 type Handle = Handle.Handle
 
 local FileSystem = {
+    OnNodeCreated = Signal.new() :: Signal<Handle>,
+    --- Fired just prior to the node being deleted
+    OnNodeDeleted = Signal.new() :: Signal<Handle>,
+
     m_Initialized = false,
     m_RootNode = NodeRegistry.Create()
 }
 
-function FileSystem:GetInstance()
+function FileSystem:Initialize()
     self = self :: typeof(FileSystem)
 
     if self.m_Initialized then
@@ -45,7 +50,7 @@ function FileSystem:GetInstance()
 			elseif Child:IsA("ModuleScript") then
 				xpcall(function()
 					local File = require(Child)
-					local FileName = File.FileName
+					local FileName = File.Name
 					local Contents = File.Contents
 
                     local Path = CPath.new(`{PathString}/{FileName}`)
@@ -97,6 +102,7 @@ function FileSystem:Create(Path: CPath, Type: "Folder" | "File", Context: Contex
             end
         end
 
+        local Exists = false
         for _, ChildHandle in CurrentNode.Children do
             local ChildNode = NodeRegistry.Get(ChildHandle)
             if not ChildNode then
@@ -105,8 +111,13 @@ function FileSystem:Create(Path: CPath, Type: "Folder" | "File", Context: Contex
 
             if ChildNode.Name == PathNode.Name then
                 CurrentNode = ChildNode
+                Exists = true
                 break
             end
+        end
+
+        if Exists then
+            continue
         end
 
         -- No child node exists, create one
@@ -120,6 +131,8 @@ function FileSystem:Create(Path: CPath, Type: "Folder" | "File", Context: Contex
 
         CurrentNode = Node
     end
+
+    self.OnNodeCreated:Fire(CurrentNode.Handle)
 
     return Result.new(true, "", CurrentNode.Handle)
 end
@@ -156,6 +169,7 @@ function FileSystem:Resolve(Path: CPath, Context: Context): Result<Handle>
             end
         end
 
+        local Exists = false
         for _, ChildHandle in CurrentNode.Children do
             local ChildNode = NodeRegistry.Get(ChildHandle)
             if not ChildNode then
@@ -164,8 +178,13 @@ function FileSystem:Resolve(Path: CPath, Context: Context): Result<Handle>
 
             if ChildNode.Name == PathNode.Name then
                 CurrentNode = ChildNode
+                Exists = true
                 break
             end
+        end
+
+        if Exists then
+            continue
         end
 
         -- No child node exists throw
@@ -180,6 +199,8 @@ function FileSystem:Move(ChildHandle: Handle, ParentHandle: Handle)
 end
 
 function FileSystem:Delete(NodeHandle: Handle): Result<nil>
+    self = self :: typeof(FileSystem)
+
     local Node = NodeRegistry.Get(NodeHandle)
     if not Node then
         return Result.new(false, "Handle pointed to non-existent node")
@@ -205,6 +226,11 @@ function FileSystem:Delete(NodeHandle: Handle): Result<nil>
         if NodeLocks.IsLocked(Handle) then
             return Result.new(false, "Node locked")
         end
+    end
+
+    -- Now call our signals
+    for _, Handle in Handles do
+        self.OnNodeDeleted:Fire(Handle)
     end
 
     NodeRegistry.Delete(NodeHandle)

@@ -37,7 +37,7 @@ function NodeLocks.ReleaseProgramLocks(PID: PID)
 end
 
 function NodeLocks.ReleaseNodeLocks(NodeHandle: Handle)
-	for _, NodeHandles in NodeLocks do
+	for _, NodeHandles in HandleLocks do
 		local Index = table.find(NodeHandles, NodeHandle)
 		if not Index then
 			continue
@@ -48,7 +48,7 @@ function NodeLocks.ReleaseNodeLocks(NodeHandle: Handle)
 end
 
 function NodeLocks.IsLocked(NodeHandle: Handle)
-	for _, NodeHandles in NodeLocks do
+	for _, NodeHandles in HandleLocks do
 		local Index = table.find(NodeHandles, NodeHandle)
 		if not Index then
 			continue

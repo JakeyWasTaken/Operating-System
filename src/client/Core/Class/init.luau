@@ -1,6 +1,6 @@
 --!optimize 2
-local Log = require("@kernel/Core/Log")
-local Maid = require("@kernel/Core/Maid")
+local Log = require("@core/Log")
+local Maid = require("@core/Maid")
 type Metatable = typeof(setmetatable({}, {}))
 type Class = Metatable
 
