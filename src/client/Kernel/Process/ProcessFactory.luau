@@ -91,6 +91,14 @@ function ProcessFactory.TerminateProcess(PID: number, ExitCode: number)
 		return
 	end
 
+	-- Delete children processes
+	for _, ChildPID in Process.m_ChildPIDs do
+		ProcessFactory.TerminateProcess(ChildPID, ExitCode)
+	end
+
+	-- Detach our process so that it doesn't leak in our parent process
+	ProcessFactory.DetachProcess(PID)
+
 	Process:Destroy()
 	ScriptFactory.FlushProcessCache(PID)
 	ProcessScheduler.ProcessTerminated(PID)
@@ -106,6 +114,58 @@ end
 
 function ProcessFactory.GetAllProcesses(): { [number]: CProcess }
 	return AllProcesses
+end
+
+function ProcessFactory.SetParentProcess(PID: number, ParentPID: number)
+	local Process, ParentProcess = AllProcesses[PID], AllProcesses[ParentPID]
+	if not Process or not ParentProcess then
+		warn(`ProcessFactory::SetParentProcess, one of the provided PID's were invalid [{PID}] [{ParentPID}]`)
+		return false
+	end
+
+	if PID == ParentPID then
+		warn(`ProcessFactory::SetParentProcess, cannot set cyclic parent child relationship`)
+		return false
+	end
+
+	local OldParent = Process.m_ParentPID and AllProcesses[Process.m_ParentPID]
+	if OldParent then
+		local Index = table.find(OldParent.m_ChildPIDs, PID)
+		if Index then
+			table.remove(OldParent.m_ChildPIDs, Index)
+		end
+	end
+
+	Process.m_ParentPID = ParentPID
+	table.insert(ParentProcess.m_ChildPIDs, PID)
+
+	return true
+end
+
+function ProcessFactory.DetachProcess(PID: number)
+	local Process = AllProcesses[PID]
+	if not Process then
+		warn(`ProcessFactory::DetachProcess, provided PID does not exist`)
+		return
+	end
+
+	if not Process.m_ParentPID then
+		return
+	end
+
+	local ParentProcess = Process.m_ParentPID and AllProcesses[Process.m_ParentPID]
+	if not ParentProcess then -- We have parent pid but no process exists?
+		Process.m_ParentPID = nil
+		warn(`ProcessFactory::DetachProcess, process was hanging, had parent PID but no parent process`)
+		return
+	end
+
+	local Index = table.find(ParentProcess.m_ChildPIDs, PID)
+	if Index then
+		table.remove(ParentProcess.m_ChildPIDs, Index)
+	end
+
+	return
 end
 
 return ProcessFactory

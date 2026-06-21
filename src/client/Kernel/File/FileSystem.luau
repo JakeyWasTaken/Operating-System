@@ -100,6 +100,8 @@ function FileSystem:Create(Path: CPath, Type: "Folder" | "File", Context: Contex
                     return Result.new(false, "Parent handle pointed to non-existent node")
                 end
             end
+
+            continue
         end
 
         local Exists = false
@@ -167,6 +169,8 @@ function FileSystem:Resolve(Path: CPath, Context: Context): Result<Handle>
                     return Result.new(false, "Parent handle pointed to non-existent node")
                 end
             end
+
+            continue
         end
 
         local Exists = false

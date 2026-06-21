@@ -137,6 +137,7 @@ export type luau_settings = {
 		panicHook: (...any) -> (),
 	},
 	errorHandling: boolean,
+	allowProxyErrors: boolean,
 	generalizedIteration: boolean,
 	staticEnvironment: boolean,
 	useImportConstants: boolean,

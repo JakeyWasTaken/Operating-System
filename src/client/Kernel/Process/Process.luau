@@ -16,6 +16,9 @@ export type CProcess = {
 
 	-- --------------------------------- Methods -------------------------------- --
 
+	GetParentPID: (self: CProcess) -> number?,
+	GetChildPIDs: (self: CProcess) -> { number },
+
 	Destroy: (self: CProcess) -> (),
 
 	-- --------------------------------- Members -------------------------------- --
@@ -23,6 +26,9 @@ export type CProcess = {
 	Terminate: (ExitCode: number) -> (),
 
 	PID: number,
+	m_ParentPID: number?,
+	m_ChildPIDs: { number },
+
 	FileContext: FileContext,
 
 	StartedAt: number,
@@ -41,11 +47,22 @@ function CProcess.new(PID: number, Label: string, FileContext: FileContext, Term
 	self.Terminate = Terminate
 
 	self.PID = PID
+	self.m_ParentPID = nil
+	self.m_ChildPIDs = {}
+
 	self.FileContext = FileContext
 
 	self.StartedAt = os.clock()
 
 	return self
+end
+
+function CProcess:GetParentPID()
+	return self.m_ParentPID
+end
+
+function CProcess:GetChildPIDs()
+	return table.clone(self.m_ChildPIDs)
 end
 
 function CProcess:Destroy()

@@ -21,7 +21,9 @@ export type CScript = {
 
 	-- --------------------------------- Methods -------------------------------- --
 
+    IsCompiled: (self: CScript) -> boolean,
     Compile: (self: CScript, OptimizationLevel: number?, DebugLevel: number?) -> Result<unknown>,
+
     Run: (self: CScript) -> Result<any>,
 
 	Destroy: (self: CScript) -> (),
@@ -55,6 +57,10 @@ function CScript.new(Source: string, ScriptPath: CPath, ScriptHandle: Handle, Ow
     self.m_Returns = nil
 
     return self
+end
+
+function CScript:IsCompiled()
+    return self.m_Bytecode ~= nil
 end
 
 function CScript:Compile(OptimizationLevel: number?, DebugLevel: number?)
@@ -91,11 +97,9 @@ function CScript:Run()
 
     do
         local luau_settings = Fiu.luau_newsettings()
-        luau_settings.errorHandling = true
-        luau_settings.callHooks.panicHook = function(...)
-            -- TODO: impl
-            warn(...)
-        end
+        luau_settings.errorHandling = false
+        luau_settings.allowProxyErrors = true
+        luau_settings.vectorCtor = vector.create :: any
 
         local Run, Close = Fiu.luau_load(self.m_Bytecode, EnvironmentFactory.CreateEnvironment(self.OwnerPID, self.ScriptPath) :: any, luau_settings)
         self.m_CloseHook = Close

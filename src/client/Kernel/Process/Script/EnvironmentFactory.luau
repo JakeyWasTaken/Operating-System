@@ -5,7 +5,8 @@ const FileContext = require("@kernel/File/Context")
 const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
 
 const Libraries = {
-	require("./Libraries/LibProcess")
+	require("./Libraries/LibProcess"),
+	require("./Libraries/LibTest"),
 }
 
 type CPath = CPath.CPath
@@ -35,7 +36,7 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 		end
 
 		for _, LibraryDefinition in Libraries do
-			if LibraryDefinition.Name == Name then
+			if LibraryDefinition.Name == Name and LibraryDefinition.Enabled then
 				local Library = LibraryDefinition.MakeLibrary(PID, ScriptPath)
 				IncludedLibraries[Name] = Library
 				return Library
@@ -119,7 +120,16 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 		return ProcessScheduler.GetThreadHandle(ThreadId), ProcessScheduler.IsMainThread(ThreadId)
 	end
 
-	-- Proxy typeof so our threads return the correct type
+	-- Proxy type/typeof so our handles report as "thread" instead of the
+	-- (truthful, but unhelpful) "userdata" they actually are under the hood.
+	local function Type(Value: any): string
+		if ProcessScheduler.IsThreadHandle(Value) then
+			return "thread"
+		end
+
+		return type(Value)
+	end
+
 	local function Typeof(Value: any): string
 		if ProcessScheduler.IsThreadHandle(Value) then
 			return "thread"
@@ -139,7 +149,7 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 			local Name = Target:sub(2, #Target)
 			local Library = GetLibrary(Name)
 			if Library == nil then
-				error(`error requiring "{Target}": library does not exist`)
+				error(`error requiring "{Target}": library does not exist`, 0)
 			end
 
 			return Library
@@ -154,7 +164,7 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 
 		local FilePath = CPath.new(FilePathStr)
 		if not FilePath:IsValid() then
-			error(`error requiring "{FilePathStr}": invalid path`)
+			error(`error requiring "{FilePathStr}": invalid path`, 0)
 		end
 
 		if FilePath:GetPathType() == "Relative" then
@@ -163,7 +173,7 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 
 		if not FilePath:IsValid() then
 			-- This is pretty vague, this could be weird to debug
-			error(`error requiring "{FilePathStr}": expanded path was invalid`)
+			error(`error requiring "{FilePathStr}": expanded path was invalid`, 0)
 		end
 
 		local Context = FileContext.Copy(Process.FileContext)
@@ -171,29 +181,31 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 
 		local NodeHandle = FileSystem:Resolve(FilePath, Context)
 		if not NodeHandle.Success then
-			error(`error requiring "{FilePathStr}": no path exists`)
+			error(`error requiring "{FilePathStr}": no path exists`, 0)
 		end
 
 		local Type = FileSystem:GetType(NodeHandle.Value :: string)
 		if not Type.Success or Type.Value ~= "File" then
-			error(`error requiring "{FilePathStr}": provided path does not point to a file`)
+			error(`error requiring "{FilePathStr}": provided path does not point to a file`, 0)
 		end
 
 		local Contents = FileSystem:Read(NodeHandle.Value :: string)
 		if not Contents.Success then
-			error(`error requiring "{FilePathStr}": failed to read file contents`)
+			error(`error requiring "{FilePathStr}": failed to read file contents`, 0)
 		end
 
 		-- Make script
 		local Script = shared.ScriptFactory.CreateScript(Contents.Value, FilePath:GetParent(), NodeHandle.Value, PID)
-		local CompilationResult = Script:Compile()
-		if not CompilationResult.Success then
-			error(`error requiring "{FilePathStr}": failed to compile, {CompilationResult.Reason}`)
+		if not Script:IsCompiled() then
+			local CompilationResult = Script:Compile()
+			if not CompilationResult.Success then
+				error(`error requiring "{FilePathStr}": failed to compile, {CompilationResult.Reason}`, 0)
+			end
 		end
 
 		local RunResult = Script:Run()
 		if not RunResult.Success then
-			error(`error requiring "{FilePathStr}": failed to run, {RunResult.Reason}`)
+			error(`error requiring "{FilePathStr}": failed to run, {RunResult.Reason}`, 0)
 		end
 
 		return RunResult.Value
@@ -272,7 +284,7 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 		setmetatable = setmetatable,
 		tonumber = tonumber,
 		tostring = tostring,
-		type = type,
+		type = Type,
 		typeof = Typeof,
 		unpack = unpack,
 		xpcall = xpcall,

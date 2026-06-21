@@ -7,23 +7,28 @@ type Class = Metatable
 export type Base = {
 	Maid: Maid.Maid,
 	_Destroy: () -> (),
+	_GetTLC: () -> Base,
 }
+
+export type GenericClass = {
+	Destroy: (self: GenericClass) -> (),
+} & Base
 
 local CREATION_LOG = false
 local CONSTRUCTOR_LOG = false
 
 local _Class = setmetatable({}, {
-	__call = function(_, Name: string, Extends: Class?)
+	__call = function(_, Name: string, Extends: Class?): any
 		if Extends then
 			local Metatable = getmetatable(Extends)
 			assert(Metatable, "Expected a RAFE class for extends")
 			assert(Metatable.__type == "RAFECLASS", "Expected a RAFE class for extends")
 
 			if CREATION_LOG then
-				Log.debug(`Creating class {Name} extending from {tostring(Extends)}`)
+				Log.fwdebug(`Creating class {Name} extending from {tostring(Extends)}`)
 			end
 		elseif CREATION_LOG then
-			Log.debug(`Creating class {Name}`)
+			Log.fwdebug(`Creating class {Name}`)
 		end
 
 		local Meta = setmetatable({}, {
@@ -35,7 +40,7 @@ local _Class = setmetatable({}, {
 				self.Maid = Maid.new()
 				self.__Destroy = function()
 					if CONSTRUCTOR_LOG then
-						Log.debug(`Class {Name} being destroyed`)
+						Log.fwdebug(`Class {Name} being destroyed`)
 					end
 
 					self.Maid:DoCleaning()
@@ -57,9 +62,18 @@ local _Class = setmetatable({}, {
 					TopSelf.__Destroy()
 				end
 
+				self._GetTLC = function()
+					local TopSelf = self
+					while rawget(TopSelf, "__inheritedby") do
+						TopSelf = rawget(TopSelf, "__inheritedby")
+					end
+
+					return TopSelf
+				end
+
 				if Extends and (Extends["new"] or Extends[tostring(Extends)]) then
 					if CONSTRUCTOR_LOG then
-						Log.debug(`Constructing inherited class, origin: [{Name}], extends: [{tostring(Extends)}]`)
+						Log.fwdebug(`Constructing inherited class, origin: [{Name}], extends: [{tostring(Extends)}]`)
 					end
 
 					local Constructor = (Extends["new"] or Extends[tostring(Extends)])
@@ -67,8 +81,8 @@ local _Class = setmetatable({}, {
 
 					rawset(self, "__inherited", Result)
 					rawset(Result, "__inheritedby", self)
-				elseif CONSTRUCTOR_LOG and Extends ~= nil then
-					Log.debug(`Failed to construct inherited class, origin: [{Name}], extends: [{tostring(Extends)}]`)
+				elseif Extends ~= nil then
+					Log.error(`Failed to construct inherited class, origin: [{Name}], extends: [{tostring(Extends)}]`)
 				end
 			end,
 			__index = function(self, Index)
@@ -229,6 +243,10 @@ function Class.GetTopLevelClass(Class: Class): Class
 	end
 
 	return TopLevelClass
+end
+
+function Class.IsDestroyed(Class: Class): boolean
+	return getmetatable(Class) == nil
 end
 
 return Class

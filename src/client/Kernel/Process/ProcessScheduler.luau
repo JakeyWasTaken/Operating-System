@@ -14,6 +14,8 @@ type KernelThread = {
 	ExitCode: number?,
 }
 
+local dbg = false and Log.debug or function() end
+
 -- stylua: ignore
 local GetFreeTID: () -> number, ReleaseTID: (number) -> () do
 	local FreeTIDs: { number } = {}
@@ -124,7 +126,7 @@ function ProcessScheduler.Tick()
 
 			Threads[ThreadId] = nil
 			ReleaseTID(ThreadId)
-            Log.debug(`Terminated thread PID: {Thread.PID} TID: {Thread.ThreadId} IsMain: {tostring(Thread.IsMain)}`)
+            dbg(`Terminated thread PID: {Thread.PID} TID: {Thread.ThreadId} IsMain: {tostring(Thread.IsMain)}`)
 
 			if Thread.IsMain then
 				shared.ProcessFactory.TerminateProcess(Thread.PID, Thread.ExitCode or 0)
@@ -139,6 +141,7 @@ function ProcessScheduler.Tick()
 			end
 
 			Thread.State = "Waiting"
+			Thread.WakeAt = nil
 		end
 
 		if Thread.State ~= "Waiting" then
@@ -180,6 +183,26 @@ function ProcessScheduler.Sleep(ThreadId: number, Seconds: number)
 	coroutine.yield()
 end
 
+function ProcessScheduler.Block(ThreadId: number)
+	local Thread = Threads[ThreadId]
+	if not Thread then
+		return
+	end
+
+	Thread.State = "Blocked"
+	coroutine.yield()
+end
+
+function ProcessScheduler.Unblock(ThreadId: number)
+	local Thread = Threads[ThreadId]
+	if not Thread or Thread.State ~= "Blocked" then
+		return
+	end
+
+	Thread.State = "Waiting"
+	coroutine.resume(Thread.Coroutine)
+end
+
 local function RegisterThread(PID: number, Coroutine: thread, IsMain: boolean, InitialState: "Waiting" | "Suspended"): KernelThread
 	local Thread: KernelThread = {
 		ThreadId = GetFreeTID(),
@@ -202,7 +225,7 @@ function ProcessScheduler.SpawnThread<A>(PID: number, IsMain: boolean, fn: (...A
 		return fn(table.unpack(Args))
 	end), IsMain, "Waiting")
 
-    Log.debug(`Spawned thread PID: {PID} TID: {Thread.ThreadId} IsMain: {tostring(IsMain)}`)
+    dbg(`Spawned thread PID: {PID} TID: {Thread.ThreadId} IsMain: {tostring(IsMain)}`)
 
     return Thread.ThreadId
 end
@@ -212,7 +235,7 @@ end
 function ProcessScheduler.CreateThread(PID: number, fn: (...any) -> ...any): number
 	local Thread = RegisterThread(PID, coroutine.create(fn), false, "Suspended")
 
-    Log.debug(`Created suspended thread PID: {PID} TID: {Thread.ThreadId}`)
+    dbg(`Created suspended thread PID: {PID} TID: {Thread.ThreadId}`)
 
 	return Thread.ThreadId
 end
@@ -224,6 +247,10 @@ function ProcessScheduler.GetThreadHandle(ThreadId: number): userdata?
 	end
 
 	return GetOrCreateHandle(ThreadId)
+end
+
+function ProcessScheduler.GetAllThreads()
+	return Threads
 end
 
 function ProcessScheduler.IsMainThread(ThreadId: number): boolean
