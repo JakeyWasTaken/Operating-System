@@ -10,16 +10,16 @@ function Overlay.Render()
     grOverlay.Begin("List")
 
     for _, Process in ProcessFactory.GetAllProcesses() do
-        grOverlay.Begin(`Process Id: {Process.PID}`, Color3.new(0.8, 0.4, 0.4))
-        grOverlay.Text((`Alive For: %.2f`):format(os.clock() - Process.StartedAt))
+        grOverlay.Begin(`Process Id: {Process:GetPID()}`, Color3.new(0.8, 0.4, 0.4))
+        grOverlay.Text((`Alive For: %.2fs`):format(os.clock() - Process.StartedAt))
 
-        if Process.m_ParentPID then
-            grOverlay.Text(`Parent Process Id: {Process.m_ParentPID}`)
+        if Process:GetParentPID() then
+            grOverlay.Text(`Parent Process Id: {Process:GetParentPID()}`)
         end
 
-        if #Process.m_ChildPIDs > 0 then
+        if #Process:GetChildPIDs() > 0 then
             grOverlay.Begin("Child Processes")
-            for _, ChildPID in Process.m_ChildPIDs do
+            for _, ChildPID in Process:GetChildPIDs() do
                 grOverlay.Text(`Process Id: {ChildPID}`)
             end
             grOverlay.End()

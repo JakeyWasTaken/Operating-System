@@ -29,5 +29,3 @@ end
 for _, result in results do
 	warn(result)
 end
-
-return 0

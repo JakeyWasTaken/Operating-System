@@ -1,6 +1,8 @@
 -- !strict
 const Class = require("@core/Class")
-const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
+const CConditionVariable = require("@core/IO/ConditionVariable")
+
+type CConditionVariable<T...> = CConditionVariable.CConditionVariable<T...>
 
 export type IOReader = {
     --- @param ChunkSize: number? - Defaults to 1KB
@@ -37,9 +39,7 @@ export type CIOStream = {
     -- --------------------------------- Members -------------------------------- --
 
     m_Contents: string,
-
-    m_SleepingKernelThreads: { number },
-    m_SleepingThreads: { thread },
+    m_ConditionVariable: CConditionVariable<>,
 
 } & Class.Base
 
@@ -52,9 +52,7 @@ function CIOStream.new()
     (CIOStream :: any)(self)
 
     self.m_Contents = ""
-
-    self.m_SleepingKernelThreads = {}
-    self.m_SleepingThreads = {}
+    self.m_ConditionVariable = CConditionVariable.new()
 
     return self
 end
@@ -81,15 +79,7 @@ end
 
 function CIOStream:Read(ChunkSize: number)
     if self.m_Contents == "" then
-        -- We need to handle this carefully so processes can interface with this
-        local CurrentThreadId = ProcessScheduler.GetCurrentThreadId()
-        if CurrentThreadId then
-            table.insert(self.m_SleepingKernelThreads, CurrentThreadId)
-            ProcessScheduler.Block(CurrentThreadId)
-        else
-            table.insert(self.m_SleepingThreads, coroutine.running())
-            coroutine.yield()
-        end
+        self.m_ConditionVariable:Wait()
     end
 
     if self.m_Contents == "" then -- IO stream closed
@@ -105,30 +95,11 @@ end
 
 function CIOStream:Write(Data: string)
     self.m_Contents ..= Data
-
-    for _, ThreadId in self.m_SleepingKernelThreads do
-        ProcessScheduler.Unblock(ThreadId)
-    end
-
-    for _, Thread in self.m_SleepingThreads do
-        coroutine.resume(Thread)
-    end
-
-    table.clear(self.m_SleepingKernelThreads)
-    table.clear(self.m_SleepingThreads)
+    self.m_ConditionVariable:Notify()
 end
 
 function CIOStream:Close()
-    for _, ThreadId in self.m_SleepingKernelThreads do
-        ProcessScheduler.Unblock(ThreadId)
-    end
-
-    for _, Thread in self.m_SleepingThreads do
-        coroutine.resume(Thread)
-    end
-
-    table.clear(self.m_SleepingKernelThreads)
-    table.clear(self.m_SleepingThreads)
+    self.m_ConditionVariable:Notify()
 
     self:_Destroy()
 end

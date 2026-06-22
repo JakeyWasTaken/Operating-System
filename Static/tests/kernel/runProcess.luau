@@ -10,12 +10,9 @@ local function reqAndCheck(target: string)
 end
 
 do -- require file checks
-	reqAndCheck("./io_stream.luau")
-	reqAndCheck("./condition_variable.luau")
+	reqAndCheck("./process/spawning.luau")
 end
 
 for _, result in results do
 	warn(result)
 end
-
-return 0

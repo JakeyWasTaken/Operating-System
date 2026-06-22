@@ -21,11 +21,41 @@ local GlobalCache = {}
 local EnvironmentFactory = {}
 
 function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
-	local function Output(Category: string, Callback: (string) -> ())
-		return function(Text: string)
-			-- push to process output
+	local function StdOut(Callback: (...any) -> ())
+		return function(...: any)
+			assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+			local Process = shared.ProcessFactory.GetProcess(PID)
+			if Process then
+				for _, Value in {...} do
+					local StrValue = tostring(Value)
+					if not StrValue then
+						continue
+					end
 
-			Callback(Text)
+					Process.StdOut:Write(StrValue)
+				end
+			else
+				warn(`PID {PID} did not have a process attributed`)
+			end
+
+			Callback(...)
+		end
+	end
+
+	local function StdErr(Callback: (Value: any, Level: number?) -> ())
+		return function(Value: any, Level: number?)
+			assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+			local Process = shared.ProcessFactory.GetProcess(PID)
+			if Process then
+				local StrValue = tostring(Value)
+				if StrValue then
+					Process.StdErr:Write(StrValue)
+				end
+			else
+				warn(`PID {PID} did not have a process attributed`)
+			end
+
+			Callback(Value, Level)
 		end
 	end
 
@@ -60,7 +90,7 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 	local function TaskDefer(fn: (...any) -> ...any, ...: any): userdata?
 		-- Leaves it Waiting without a JumpExecution, so it runs next Tick
 		-- instead of right now. Matches real task.defer.
-		local ThreadId = ProcessScheduler.SpawnThread(PID, false, fn, ...)
+		local ThreadId = ProcessScheduler.SpawnThreadDeferred(PID, false, fn, ...)
 		return ProcessScheduler.GetThreadHandle(ThreadId)
 	end
 
@@ -139,7 +169,6 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 	end
 
 	local function Exit(ExitCode: number)
-		-- TODO: handle this better eventually
 		assert(shared.ProcessFactory, `ProcessFactory was not ready in-time`)
 		shared.ProcessFactory.TerminateProcess(PID, ExitCode)
 	end
@@ -157,7 +186,6 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 
 		local FilePathStr = Target
 
-		-- TODO: handle this better eventually
 		assert(shared.ProcessFactory, `ProcessFactory was not ready in-time`)
 		local Process = shared.ProcessFactory.GetProcess(PID)
 		assert(Process, `No process with PID "{PID}"`)
@@ -208,7 +236,11 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 			error(`error requiring "{FilePathStr}": failed to run, {RunResult.Reason}`, 0)
 		end
 
-		return RunResult.Value
+		if RunResult.Value == nil or #(RunResult.Value :: {any}) ~= 1 then
+			error(`Module did not return exactly one value.`)
+		end
+
+		return (RunResult.Value :: {any})[1]
 	end
 
 	-- Global is shared across a process
@@ -217,9 +249,9 @@ function EnvironmentFactory.CreateEnvironment(PID: number, ScriptPath: CPath)
 
 	local Environment = {
 		-- LOGGING
-		print = Output("Print", print),
-		warn = Output("Warn", warn),
-		error = Output("Error", error :: any),
+		print = StdOut(print),
+		warn = StdOut(warn),
+		error = StdErr(error :: any),
 
 		string = string,
 		bit32 = bit32,

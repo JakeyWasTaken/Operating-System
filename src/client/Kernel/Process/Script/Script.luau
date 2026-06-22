@@ -21,6 +21,8 @@ export type CScript = {
 
 	-- --------------------------------- Methods -------------------------------- --
 
+    GetDirective: (self: CScript, DirectiveLabel: string) -> string?,
+
     IsCompiled: (self: CScript) -> boolean,
     Compile: (self: CScript, OptimizationLevel: number?, DebugLevel: number?) -> Result<unknown>,
 
@@ -36,11 +38,14 @@ export type CScript = {
 
     m_Source: string,
     m_Bytecode: string?,
-    m_Returns: any?,
+    m_Returns: { any }?,
 
     m_CloseHook: () -> (),
 
 } & Class.Base
+
+local DEFAULT_OPTIMIZE = 1
+local DEFAULT_DEBUG = 1
 
 local CScript: CScript = Class("CScript") :: any
 
@@ -59,6 +64,25 @@ function CScript.new(Source: string, ScriptPath: CPath, ScriptHandle: Handle, Ow
     return self
 end
 
+function CScript:GetDirective(DirectiveLabel: string)
+    local Lines = self.m_Source:split("\n")
+    for _, Line in Lines do
+        local Components = Line:split(" ")
+        if Components[1]:sub(1, 3) ~= "--!" then
+            continue
+        end
+
+        local Label = Components[1]:sub(4, #Components[1])
+        if Label ~= DirectiveLabel then
+            continue
+        end
+
+        return Components[2]
+    end
+
+    return nil
+end
+
 function CScript:IsCompiled()
     return self.m_Bytecode ~= nil
 end
@@ -67,6 +91,9 @@ function CScript:Compile(OptimizationLevel: number?, DebugLevel: number?)
     if self.m_Bytecode then
         return Result.new(false, "Already compiled")
     end
+
+    OptimizationLevel = tonumber(self:GetDirective("optimize")) or OptimizationLevel or DEFAULT_OPTIMIZE
+    DebugLevel = tonumber(self:GetDirective("debug")) or DebugLevel or DEFAULT_DEBUG
 
     local Success, Error = pcall(function()
         Log.debug(`Compiling script source`)
@@ -114,11 +141,12 @@ function CScript:Run()
             return Result.new(false, Error)
         end
 
-        if #Returns ~= 1 then
-            return Result.new(false, `Module did not return exactly one value.`)
-        end
+        -- This is no longer handled here, we do not care what the script returns
+        -- if #Returns ~= 1 then
+        --     return Result.new(false, `Module did not return exactly one value.`)
+        -- end
 
-        self.m_Returns = Returns[1]
+        self.m_Returns = Returns
     end
 
     return Result.new(true, "", self.m_Returns)

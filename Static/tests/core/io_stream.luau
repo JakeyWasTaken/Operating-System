@@ -1,21 +1,13 @@
+--[[
+
+Exists to test the IOStream process side thread blocking/waking
+
+]]
+
 local Ok, test = pcall(require, "@test")
 if not Ok then
-    return "OK" -- We are testing outside of studio, just skip
+	return "OK" -- We are testing outside of studio, just skip
 end
-
--- This script's own body runs as a real ProcessScheduler kernel thread (it
--- got here via require() from a process-tracked script), so calling
--- IOStream:Read() directly here exercises the ProcessScheduler.Block path
--- in Stream.luau, not the plain coroutine.yield() fallback - see
--- Stream.spec.luau for that side.
---
--- task.defer (not task.spawn) is used for the writer/closer below:
--- task.spawn would run immediately via JumpExecution, before Read() even
--- gets a chance to block. task.defer just registers a new kernel thread
--- without running it, so Read() reliably blocks first, and Tick's own
--- round-robin is what later runs the deferred thread and wakes the reader.
-
-print("testing IOStream's kernel-thread (process-side) blocking path")
 
 -- a blocked kernel-thread reader wakes with the written data once Write runs
 do
@@ -82,7 +74,10 @@ do
 	task.wait(0.05)
 
 	assert(Results[1] == "data", "the first-resumed blocked reader should get the written data")
-	assert(#Results == 1, "the second-resumed blocked reader currently gets nil (indistinguishable from the stream closing) since the buffer is already drained by the time it wakes - table.insert with a nil value doesn't grow the array")
+	assert(
+		#Results == 1,
+		"the second-resumed blocked reader currently gets nil (indistinguishable from the stream closing) since the buffer is already drained by the time it wakes - table.insert with a nil value doesn't grow the array"
+	)
 end
 
 return "OK"

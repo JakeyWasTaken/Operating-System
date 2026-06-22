@@ -64,9 +64,7 @@ function ProcessFactory.CreateProcess(ProgramPath: CPath, ProgramContext: Contex
 
 	local PID = GetFreePID()
 	local Label = FileSystem:GetName(FileHandle).Value or "Unknown"
-	local Process = CProcess.new(PID, Label, ProgramContext, function(ExitCode: number)
-		ProcessFactory.TerminateProcess(PID, ExitCode)
-	end)
+	local Process = CProcess.new(PID, Label, ProgramContext)
 	AllProcesses[PID] = Process
 
 	Log.debug(`Created new process PID: {PID} Label: "{Label}"`)
@@ -80,7 +78,11 @@ function ProcessFactory.CreateProcess(ProgramPath: CPath, ProgramContext: Contex
 		return Result.new(false, `Failed to compile script\n{CompilationResult.Reason}`) :: Result<CProcess>
 	end
 
-	ProcessScheduler.SpawnThread(PID, true, Script.Run :: any, Script)
+	-- Any other exit code should be passed via env::exit or libprocess::Terminate
+	ProcessScheduler.SpawnThreadDeferred(PID, true, function()
+		local Result = Script:Run()
+		ProcessFactory.TerminateProcess(PID, Result.Success and 0 or -1)
+	end)
 
 	return Result.new(true, "", Process)
 end
@@ -99,7 +101,7 @@ function ProcessFactory.TerminateProcess(PID: number, ExitCode: number)
 	-- Detach our process so that it doesn't leak in our parent process
 	ProcessFactory.DetachProcess(PID)
 
-	Process:Destroy()
+	Process:Destroy(ExitCode)
 	ScriptFactory.FlushProcessCache(PID)
 	ProcessScheduler.ProcessTerminated(PID)
 	ReleasePID(PID)
@@ -120,12 +122,12 @@ function ProcessFactory.SetParentProcess(PID: number, ParentPID: number)
 	local Process, ParentProcess = AllProcesses[PID], AllProcesses[ParentPID]
 	if not Process or not ParentProcess then
 		warn(`ProcessFactory::SetParentProcess, one of the provided PID's were invalid [{PID}] [{ParentPID}]`)
-		return false
+		return
 	end
 
 	if PID == ParentPID then
 		warn(`ProcessFactory::SetParentProcess, cannot set cyclic parent child relationship`)
-		return false
+		return
 	end
 
 	local OldParent = Process.m_ParentPID and AllProcesses[Process.m_ParentPID]
@@ -139,7 +141,7 @@ function ProcessFactory.SetParentProcess(PID: number, ParentPID: number)
 	Process.m_ParentPID = ParentPID
 	table.insert(ParentProcess.m_ChildPIDs, PID)
 
-	return true
+	return
 end
 
 function ProcessFactory.DetachProcess(PID: number)

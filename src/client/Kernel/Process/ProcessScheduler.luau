@@ -77,22 +77,6 @@ local MAX_JUMP_CHAIN = 1024
 -- Tick picks it up right away instead of waiting for its normal turn.
 local PendingJump: number? = nil
 
--- Only the main thread's fn returns a Result<T> (CScript:Run()).
--- A plain task.spawn/coroutine.create thread can return anything, or
--- nothing. Don't assume it's shaped like a Result.
-local function ComputeExitCode(Ok: boolean, ReturnValue: unknown): number
-	if not Ok then
-		return -1
-	elseif typeof(ReturnValue) == "table" and (ReturnValue :: any).Success ~= nil then
-		local Result = ReturnValue :: { Success: boolean, Value: unknown? }
-		return (Result.Success and (Result.Value :: number?) or -1) :: number
-	elseif typeof(ReturnValue) == "number" then
-		return ReturnValue :: number
-	end
-
-	return 0
-end
-
 local function ResumeThread(Thread: KernelThread, ...: any): (boolean, ...any)
 	Thread.State = "Running"
 	local Results = table.pack(coroutine.resume(Thread.Coroutine, ...))
@@ -100,12 +84,13 @@ local function ResumeThread(Thread: KernelThread, ...: any): (boolean, ...any)
 
 	if coroutine.status(Thread.Coroutine) == "dead" then
 		Thread.State = "Dead"
-		Thread.ExitCode = ComputeExitCode(Ok, Results[2])
+		Thread.ExitCode = Ok and 0 or -1
 	elseif Thread.State == "Running" then
 		-- It yielded, but nothing set a more specific state first.
-		-- A bare coroutine.yield(), for example. Fall back to Waiting
-		-- so it isn't stuck on Running forever.
-		Thread.State = "Waiting"
+		-- A bare coroutine.yield(), for example. Nothing scheduled an
+		-- auto-wake, so it goes idle, not Waiting, otherwise Tick would
+		-- resume it next frame even though nobody called resume.
+		Thread.State = "Suspended"
 	end
 
 	return table.unpack(Results, 1, Results.n)
@@ -127,10 +112,6 @@ function ProcessScheduler.Tick()
 			Threads[ThreadId] = nil
 			ReleaseTID(ThreadId)
             dbg(`Terminated thread PID: {Thread.PID} TID: {Thread.ThreadId} IsMain: {tostring(Thread.IsMain)}`)
-
-			if Thread.IsMain then
-				shared.ProcessFactory.TerminateProcess(Thread.PID, Thread.ExitCode or 0)
-			end
 
 			continue
 		end
@@ -183,24 +164,23 @@ function ProcessScheduler.Sleep(ThreadId: number, Seconds: number)
 	coroutine.yield()
 end
 
-function ProcessScheduler.Block(ThreadId: number)
+function ProcessScheduler.Block(ThreadId: number): ...any
 	local Thread = Threads[ThreadId]
 	if not Thread then
 		return
 	end
 
 	Thread.State = "Blocked"
-	coroutine.yield()
+	return coroutine.yield()
 end
 
-function ProcessScheduler.Unblock(ThreadId: number)
+function ProcessScheduler.Unblock(ThreadId: number, ...: any)
 	local Thread = Threads[ThreadId]
 	if not Thread or Thread.State ~= "Blocked" then
 		return
 	end
 
-	Thread.State = "Waiting"
-	coroutine.resume(Thread.Coroutine)
+	ResumeThread(Thread, ...)
 end
 
 local function RegisterThread(PID: number, Coroutine: thread, IsMain: boolean, InitialState: "Waiting" | "Suspended"): KernelThread
@@ -219,7 +199,7 @@ local function RegisterThread(PID: number, Coroutine: thread, IsMain: boolean, I
 	return Thread
 end
 
-function ProcessScheduler.SpawnThread<A>(PID: number, IsMain: boolean, fn: (...A) -> ...any, ...: A): number
+function ProcessScheduler.SpawnThreadDeferred<A>(PID: number, IsMain: boolean, fn: (...A) -> ...any, ...: A): number
 	local Args = { ... }
 	local Thread = RegisterThread(PID, coroutine.create(function()
 		return fn(table.unpack(Args))
@@ -231,7 +211,7 @@ function ProcessScheduler.SpawnThread<A>(PID: number, IsMain: boolean, fn: (...A
 end
 
 --- coroutine.create() takes no args, those come later via resume.
---- Unlike SpawnThread, this thread doesn't run until something resumes it.
+--- Unlike SpawnThreadDeferred, this thread doesn't run until something resumes it.
 function ProcessScheduler.CreateThread(PID: number, fn: (...any) -> ...any): number
 	local Thread = RegisterThread(PID, coroutine.create(fn), false, "Suspended")
 
@@ -266,7 +246,7 @@ function ProcessScheduler.TaskSpawn(PID: number, Target: unknown, ...: any): use
 	local ThreadId: number
 
 	if typeof(Target) == "function" then
-		ThreadId = ProcessScheduler.SpawnThread(PID, false, Target :: any, ...)
+		ThreadId = ProcessScheduler.SpawnThreadDeferred(PID, false, Target :: any, ...)
 	else
 		local ResolvedThreadId = ResolveHandle(Target)
 		assert(ResolvedThreadId, "task.spawn expects a function or a thread handle")
