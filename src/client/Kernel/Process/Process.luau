@@ -16,7 +16,7 @@ type Result<T> = Result.Result<T>
 
 --- Construction and Destruction can only happen via `ProcessFactory`
 export type CProcess = {
-	new: (PID: number, Label: string, FileContext: FileContext) -> CProcess,
+	new: (PID: number, Label: string, Arguments: {string}, FileContext: FileContext) -> CProcess,
 
 	-- --------------------------------- Methods -------------------------------- --
 
@@ -31,6 +31,7 @@ export type CProcess = {
 	-- --------------------------------- Members -------------------------------- --
 
 	FileContext: FileContext,
+	Arguments: {string},
 	StartedAt: number,
 
 	StdIn: IOStream,
@@ -47,7 +48,7 @@ export type CProcess = {
 
 local CProcess: CProcess = Class("CProcess") :: any
 
-function CProcess.new(PID: number, Label: string, FileContext: FileContext)
+function CProcess.new(PID: number, Label: string, Arguments: {string}, FileContext: FileContext)
 	if Context.IsTestRun then
 		assert(debug.info(2, "s"):find("ProcessFactory"), `Cannot call CProcess constructor outside of ProcessFactory`)
 	end
@@ -56,6 +57,7 @@ function CProcess.new(PID: number, Label: string, FileContext: FileContext)
 	(CProcess :: any)(self)
 
 	self.FileContext = FileContext
+	self.Arguments = Arguments
 	self.StartedAt = os.clock()
 
 	self.StdIn = CIOStream.new()

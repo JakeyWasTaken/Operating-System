@@ -29,7 +29,17 @@ local AllProcesses: { [number]: CProcess } = {}
 local ProcessFactory = {}
 shared.ProcessFactory = ProcessFactory
 
-function ProcessFactory.CreateProcess(ProgramPath: CPath, ProgramContext: Context): Result<CProcess>
+function ProcessFactory.CreateProcess(ProgramPath: CPath, Arguments: {string}, ProgramContext: Context): Result<CProcess>
+	-- convert arguments to string, throw if cannot convert
+	for i, Argument in Arguments do
+		local StrArg = tostring(Argument)
+		if not StrArg then
+			return Result.new(false, `Argument at index [{i}] could not be converted into a string.`) :: Result<CProcess>
+		end
+
+		Arguments[i] = StrArg
+	end
+
 	-- Fetch file and validate it & params
 	local FileResult = FileSystem:Resolve(ProgramPath, ProgramContext)
 	if not FileResult.Success then
@@ -55,7 +65,7 @@ function ProcessFactory.CreateProcess(ProgramPath: CPath, ProgramContext: Contex
 
 	local PID = GetNextPID()
 	local Label = FileSystem:GetName(FileHandle).Value or "Unknown"
-	local Process = CProcess.new(PID, Label, ProgramContext)
+	local Process = CProcess.new(PID, Label, Arguments, ProgramContext)
 	AllProcesses[PID] = Process
 
 	Log.debug(`Created new process PID: {PID} Label: "{Label}"`)

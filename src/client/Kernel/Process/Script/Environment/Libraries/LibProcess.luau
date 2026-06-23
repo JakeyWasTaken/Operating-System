@@ -20,8 +20,14 @@ return {
     Enabled = true,
 	MakeLibrary = function(LibraryPID: number, ScriptPath: CPath)
         return {
-            GetCurrentPID = function(): number
+            GetPID = function(): number
                 return LibraryPID
+            end,
+
+            GetArguments = function(): {string}
+                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                local Process = shared.ProcessFactory.GetProcess(LibraryPID)
+                return Process and Process.Arguments or {}
             end,
 
             GetParentPID = function(): number?
@@ -42,6 +48,10 @@ return {
                 Options: { FileContext: FileContext?, ForwardStdIO: boolean? }
             ): {PID: number, StdIn: IOWriter, StdOut: IOReader, StdErr: IOReader, Status: () -> number}
 
+                assert(typeof(ProgramPath) == "string", `Expected parameter ProgramPath`)
+                assert(typeof(Arguments) == "table", `Expected parameter Arguments`)
+                assert(typeof(Options) == "table", `Expected parameter Options`)
+
                 assert(shared.ProcessFactory, `ProcessFactory was not ready`)
                 local OurProcess = shared.ProcessFactory.GetProcess(LibraryPID)
                 assert(OurProcess, `PID {LibraryPID} did not have a process attributed`)
@@ -56,7 +66,7 @@ return {
                 end
 
                 local FileContext = Options.FileContext or OurProcess.FileContext
-                local SpawningResult = shared.ProcessFactory.CreateProcess(Path, FileContext)
+                local SpawningResult = shared.ProcessFactory.CreateProcess(Path, Arguments, FileContext)
                 local SpawnedProcess = SpawningResult.Value
                 assert(SpawningResult.Success, SpawningResult.Reason)
 

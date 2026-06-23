@@ -104,8 +104,15 @@ end
 
 -- A process can target itself with Detach harmlessly
 do
-	local Ok = pcall(process.Detach, process.GetCurrentPID())
+	local Ok = pcall(process.Detach, process.GetPID())
 	assert(Ok, "Detach should succeed when targeting the caller itself")
+end
+
+-- A process can take arguments and use them
+do
+	local ExitCode = 101
+	local Spawned = process.Spawn("./to_spawn_arguments.luau", { tostring(ExitCode) }, {})
+	assert(Spawned.Status() == ExitCode, "a spawned process should be able to take arguments and use them")
 end
 
 return "OK"

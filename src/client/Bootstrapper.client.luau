@@ -17,16 +17,16 @@ end)
 
 task.wait(5)
 
-local Result = ProcessFactory.CreateProcess(CPath.new("/tests/vm/runConformance.luau"), Context.new())
+local Result = ProcessFactory.CreateProcess(CPath.new("/tests/vm/runConformance.luau"), {}, Context.new())
 assert(Result.Success, Result.Reason)
 
-Result = ProcessFactory.CreateProcess(CPath.new("/tests/vm/runRequireFiles.luau"), Context.new())
+Result = ProcessFactory.CreateProcess(CPath.new("/tests/vm/runRequireFiles.luau"), {}, Context.new())
 assert(Result.Success, Result.Reason)
 
-Result = ProcessFactory.CreateProcess(CPath.new("/tests/core/runCore.luau"), Context.new())
+Result = ProcessFactory.CreateProcess(CPath.new("/tests/core/runCore.luau"), {}, Context.new())
 assert(Result.Success, Result.Reason)
 
-Result = ProcessFactory.CreateProcess(CPath.new("/tests/kernel/runProcess.luau"), Context.new())
+Result = ProcessFactory.CreateProcess(CPath.new("/tests/kernel/runProcess.luau"), {}, Context.new())
 assert(Result.Success, Result.Reason)
 
 -- TODO: handle escalated processes, figure out how file handles will be owned (per process? per root process?) probably per process thinking abt it now, makes way more sense since you can detach at any point

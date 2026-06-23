@@ -1,3 +1,3 @@
 local process = require("@process")
 
-process.Terminate(process.GetCurrentPID(), 55)
+process.Terminate(process.GetPID(), 55)

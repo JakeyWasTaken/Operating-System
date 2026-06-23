@@ -89,6 +89,7 @@ function CScript:IsCompiled()
     return self.m_Bytecode ~= nil
 end
 
+-- TODO: Speed this up by caching bytecode globally
 function CScript:Compile(OptimizationLevel: number?, DebugLevel: number?)
     if self.m_Bytecode then
         return Result.new(false, "Already compiled")
