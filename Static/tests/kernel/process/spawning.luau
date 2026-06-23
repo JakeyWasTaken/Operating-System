@@ -3,15 +3,15 @@ local process = require("@process")
 -- StdOut carries exactly what the spawned script printed, and Status() blocks
 -- until termination and returns the code passed to exit()
 do
-	local Spawned = process.Spawn("./to_spawn.luau", {}, {})
+	local Spawned = process.Spawn("./to_spawn.luau", {}, {}, {})
 	assert(Spawned.StdOut:Read() == "Hello!", "StdOut should carry exactly what the spawned script printed")
 	assert(Spawned.Status() == 0, "Status() should return the exact exit code passed to exit()")
 end
 
 -- Each spawned process gets its own distinct PID, and each one runs and exits independently
 do
-	local A = process.Spawn("./to_spawn_fast.luau", {}, {})
-	local B = process.Spawn("./to_spawn_fast.luau", {}, {})
+	local A = process.Spawn("./to_spawn_fast.luau", {}, {}, {})
+	local B = process.Spawn("./to_spawn_fast.luau", {}, {}, {})
 
 	assert(A.PID ~= B.PID, "two spawned processes should receive distinct PIDs")
 	assert(A.Status() == 0, "process A should exit with the code it passed to exit()")
@@ -20,14 +20,14 @@ end
 
 -- Status() forwards whatever exit code the script actually requested, not just truthy/falsy
 do
-	local Spawned = process.Spawn("./to_spawn_exit_code.luau", {}, {})
+	local Spawned = process.Spawn("./to_spawn_exit_code.luau", {}, {}, {})
 	assert(Spawned.Status() == 42, "Status() should forward the exact exit code passed to exit(), not just any truthy value")
 end
 
 -- An uncaught error() in the spawned script's main thread writes to StdErr
 -- and the process exits with code -1
 do
-	local Spawned = process.Spawn("./to_spawn_stderr.luau", {}, {})
+	local Spawned = process.Spawn("./to_spawn_stderr.luau", {}, {}, {})
 	assert(Spawned.StdErr:Read() == "boom", "error() should write its message to the process's StdErr stream")
 	assert(Spawned.Status() == -1, "an uncaught error in the main thread should result in a -1 exit code")
 end
@@ -35,7 +35,7 @@ end
 -- The spawning process tracks the spawned PID as a child while it's alive,
 -- and stops tracking it once it terminates
 do
-	local Spawned = process.Spawn("./to_spawn_alive.luau", {}, {})
+	local Spawned = process.Spawn("./to_spawn_alive.luau", {}, {}, {})
 	assert(
 		table.find(process.GetChildPIDs(), Spawned.PID) ~= nil,
 		"a freshly spawned process should immediately show up in the parent's child PID list"
@@ -50,21 +50,21 @@ end
 -- silently returning a broken handle
 do
 	local Ok = pcall(function()
-		process.Spawn("./does_not_exist.luau", {}, {})
+		process.Spawn("./does_not_exist.luau", {}, {}, {})
 	end)
 	assert(not Ok, "spawning a nonexistent program path should error")
 end
 
 -- A spawned process can itself spawn a child process and forward its exit code
 do
-	local Spawned = process.Spawn("./to_spawn_child.luau", {}, {})
+	local Spawned = process.Spawn("./to_spawn_child.luau", {}, {}, {})
 	assert(Spawned.Status() == 0, "a spawned process should be able to spawn its own children and exit normally")
 end
 
 -- Terminate forcibly kills a child, regardless of where it currently is in
 -- its own execution, and detaches it from the parent's child list
 do
-	local Spawned = process.Spawn("./to_spawn_alive.luau", {}, {})
+	local Spawned = process.Spawn("./to_spawn_alive.luau", {}, {}, {})
 	assert(table.find(process.GetChildPIDs(), Spawned.PID) ~= nil, "the child should be tracked right after spawning")
 
 	process.Terminate(Spawned.PID, 9)
@@ -80,13 +80,13 @@ end
 
 -- A process can target itself with Terminate
 do
-	local Spawned = process.Spawn("./to_terminate_self.luau", {}, {})
+	local Spawned = process.Spawn("./to_terminate_self.luau", {}, {}, {})
 	assert(Spawned.Status() == 55, "a process should be able to terminate itself via Terminate() with a custom exit code")
 end
 
 -- Detach unlinks a child from the parent's child list without killing it
 do
-	local Spawned = process.Spawn("./to_spawn_alive.luau", {}, {})
+	local Spawned = process.Spawn("./to_spawn_alive.luau", {}, {}, {})
 	assert(table.find(process.GetChildPIDs(), Spawned.PID) ~= nil, "the child should be tracked right after spawning")
 
 	process.Detach(Spawned.PID)
@@ -111,7 +111,14 @@ end
 -- A process can take arguments and use them
 do
 	local ExitCode = 101
-	local Spawned = process.Spawn("./to_spawn_arguments.luau", { tostring(ExitCode) }, {})
+	local Spawned = process.Spawn("./to_spawn_arguments.luau", {}, { tostring(ExitCode) }, {})
+	assert(Spawned.Status() == ExitCode, "a spawned process should be able to take arguments and use them")
+end
+
+-- A process can take environment and use them
+do
+	local ExitCode = 101
+	local Spawned = process.Spawn("./to_spawn_environment.luau", { ExitCode = tostring(ExitCode) }, {}, {})
 	assert(Spawned.Status() == ExitCode, "a spawned process should be able to take arguments and use them")
 end
 

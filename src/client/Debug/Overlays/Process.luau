@@ -37,7 +37,7 @@ function Overlay.Render()
         grOverlay.Text(`Process Id: {Thread.PID}`)
         grOverlay.Text(`Is Main: {Thread.IsMain}`)
         grOverlay.Text(`State: {Thread.State}`)
-        grOverlay.Text(Thread.WakeAt and (`Waking In: %.2fs`):format(os.clock() - Thread.WakeAt) or "Waking In: ~s")
+        grOverlay.Text(Thread.WakeAt and (`Waking In: %.2fs`):format(Thread.WakeAt - os.clock()) or "Waking In: ~s")
         grOverlay.End()
     end
 

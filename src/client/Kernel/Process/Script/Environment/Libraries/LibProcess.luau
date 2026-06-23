@@ -30,6 +30,12 @@ return {
                 return Process and Process.Arguments or {}
             end,
 
+            GetEnvironment = function(): { [string]: string? }
+                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                local Process = shared.ProcessFactory.GetProcess(LibraryPID)
+                return Process and Process.Environment or {}
+            end,
+
             GetParentPID = function(): number?
                 assert(shared.ProcessFactory, `ProcessFactory was not ready`)
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
@@ -44,11 +50,13 @@ return {
 
             Spawn = function(
                 ProgramPath: string,
+                Environment: {[string]: string?},
                 Arguments: { string },
                 Options: { FileContext: FileContext?, ForwardStdIO: boolean? }
             ): {PID: number, StdIn: IOWriter, StdOut: IOReader, StdErr: IOReader, Status: () -> number}
 
                 assert(typeof(ProgramPath) == "string", `Expected parameter ProgramPath`)
+                assert(typeof(Environment) == "table", `Expected parameter Environment`)
                 assert(typeof(Arguments) == "table", `Expected parameter Arguments`)
                 assert(typeof(Options) == "table", `Expected parameter Options`)
 
@@ -66,10 +74,10 @@ return {
                 end
 
                 local FileContext = Options.FileContext or OurProcess.FileContext
-                local SpawningResult = shared.ProcessFactory.CreateProcess(Path, Arguments, FileContext)
-                local SpawnedProcess = SpawningResult.Value
+                local SpawningResult = shared.ProcessFactory.CreateProcess(Path, Environment, Arguments, FileContext)
                 assert(SpawningResult.Success, SpawningResult.Reason)
 
+                local SpawnedProcess = SpawningResult.Value
                 shared.ProcessFactory.SetParentProcess(SpawnedProcess:GetPID(), LibraryPID)
 
                 -- Forward IO

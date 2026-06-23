@@ -29,15 +29,27 @@ local AllProcesses: { [number]: CProcess } = {}
 local ProcessFactory = {}
 shared.ProcessFactory = ProcessFactory
 
-function ProcessFactory.CreateProcess(ProgramPath: CPath, Arguments: {string}, ProgramContext: Context): Result<CProcess>
-	-- convert arguments to string, throw if cannot convert
-	for i, Argument in Arguments do
-		local StrArg = tostring(Argument)
-		if not StrArg then
-			return Result.new(false, `Argument at index [{i}] could not be converted into a string.`) :: Result<CProcess>
+function ProcessFactory.CreateProcess(ProgramPath: CPath, Environment: { [string]: string? }, Arguments: {string}, ProgramContext: Context): Result<CProcess>
+	-- Validate environment
+	for K, EnvironmentVariable in Environment do
+		if typeof(K) ~= "string" then
+			return Result.new(false, `Environment must be a map of string to string`) :: Result<CProcess>
 		end
 
-		Arguments[i] = StrArg
+		if typeof(EnvironmentVariable) ~= "string" then
+			return Result.new(false, `Environment variable at key "{K}" was not a string.`) :: Result<CProcess>
+		end
+	end
+
+	-- Validate arguments
+	for i, Argument in Arguments do
+		if typeof(i) ~= "number" then
+			return Result.new(false, `Arguments must be an array of strings`) :: Result<CProcess>
+		end
+
+		if typeof(Argument) ~= "string" then
+			return Result.new(false, `Argument at index [{i}] was not a string.`) :: Result<CProcess>
+		end
 	end
 
 	-- Fetch file and validate it & params
@@ -65,7 +77,7 @@ function ProcessFactory.CreateProcess(ProgramPath: CPath, Arguments: {string}, P
 
 	local PID = GetNextPID()
 	local Label = FileSystem:GetName(FileHandle).Value or "Unknown"
-	local Process = CProcess.new(PID, Label, Arguments, ProgramContext)
+	local Process = CProcess.new(PID, Label, Environment, Arguments, ProgramContext)
 	AllProcesses[PID] = Process
 
 	Log.debug(`Created new process PID: {PID} Label: "{Label}"`)
