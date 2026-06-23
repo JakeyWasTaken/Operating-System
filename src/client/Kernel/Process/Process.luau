@@ -6,7 +6,6 @@ const FileContext = require("@kernel/File/Context")
 const Result = require("@core/Result")
 const CScript = require("@kernel/Process/Script/Script")
 const CIOStream = require("@core/IO/Stream")
-const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
 const CConditionVariable = require("@core/IO/ConditionVariable")
 
 type IOStream = CIOStream.CIOStream

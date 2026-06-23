@@ -15,21 +15,12 @@ type CPath = CPath.CPath
 type CProcess = CProcess.CProcess
 
 -- stylua: ignore
-local GetFreePID: () -> number, ReleasePID: (number) -> () do
-	local FreePIDs: { number } = {}
+local GetNextPID: () -> number do
 	local PIDCounter = 0
 
-	GetFreePID = function()
-		if #FreePIDs == 0 then
-			PIDCounter += 1
-			return PIDCounter
-		end
-
-		return table.remove(FreePIDs) :: number
-	end
-
-	ReleasePID = function(PID: number)
-		table.insert(FreePIDs, PID)
+	GetNextPID = function()
+		PIDCounter += 1
+		return PIDCounter
 	end
 end
 
@@ -62,7 +53,7 @@ function ProcessFactory.CreateProcess(ProgramPath: CPath, ProgramContext: Contex
 
 	-- Create process & run script
 
-	local PID = GetFreePID()
+	local PID = GetNextPID()
 	local Label = FileSystem:GetName(FileHandle).Value or "Unknown"
 	local Process = CProcess.new(PID, Label, ProgramContext)
 	AllProcesses[PID] = Process
@@ -102,9 +93,8 @@ function ProcessFactory.TerminateProcess(PID: number, ExitCode: number)
 	ProcessFactory.DetachProcess(PID)
 
 	Process:Destroy(ExitCode)
-	ScriptFactory.FlushProcessCache(PID)
-	ProcessScheduler.ProcessTerminated(PID)
-	ReleasePID(PID)
+	ScriptFactory.OnProcessTermination(PID)
+	ProcessScheduler.OnProcessTerminated(PID)
 	AllProcesses[PID] = nil
 
 	Log.debug(`Terminated process PID: {PID} ExitCode: {ExitCode}`)

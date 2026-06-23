@@ -6,7 +6,9 @@ const VendorTypes = require("@vendor/VendorTypes")
 const Result = require("@core/Result")
 const Log = require("@core/Log")
 const CPath = require("@kernel/File/Path")
-const EnvironmentFactory = require("@kernel/Process/Script/EnvironmentFactory")
+const EnvironmentFactory = require("@kernel/Process/Script/Environment/EnvironmentFactory")
+
+-- Compiler & Interpreter
 const Fiu = require("@vendor/Fiu") :: VendorTypes.Fiu
 const LuauCeptionCompiler = require("@vendor/LuauCeptionCompiler") :: VendorTypes.LuauCeptionCompiler
 
@@ -128,7 +130,12 @@ function CScript:Run()
         luau_settings.allowProxyErrors = true
         luau_settings.vectorCtor = vector.create :: any
 
-        local Run, Close = Fiu.luau_load(self.m_Bytecode, EnvironmentFactory.CreateEnvironment(self.OwnerPID, self.ScriptPath) :: any, luau_settings)
+        local ScriptEnvironment = EnvironmentFactory.CreateEnvironment({
+            PID = self.OwnerPID,
+            ScriptPath = self.ScriptPath
+        })
+
+        local Run, Close = Fiu.luau_load(self.m_Bytecode, ScriptEnvironment :: any, luau_settings)
         self.m_CloseHook = Close
 
         local Returns = {}

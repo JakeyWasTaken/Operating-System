@@ -17,21 +17,12 @@ type KernelThread = {
 local dbg = false and Log.debug or function() end
 
 -- stylua: ignore
-local GetFreeTID: () -> number, ReleaseTID: (number) -> () do
-	local FreeTIDs: { number } = {}
+local GetNextTID: () -> number do
 	local TIDCounter = 0
 
-	GetFreeTID = function()
-		if #FreeTIDs == 0 then
-			TIDCounter += 1
-			return TIDCounter
-		end
-
-		return table.remove(FreeTIDs) :: number
-	end
-
-	ReleaseTID = function(TID: number)
-		table.insert(FreeTIDs, TID)
+	GetNextTID = function()
+		TIDCounter += 1
+		return TIDCounter
 	end
 end
 
@@ -110,7 +101,6 @@ function ProcessScheduler.Tick()
 			end
 
 			Threads[ThreadId] = nil
-			ReleaseTID(ThreadId)
             dbg(`Terminated thread PID: {Thread.PID} TID: {Thread.ThreadId} IsMain: {tostring(Thread.IsMain)}`)
 
 			continue
@@ -185,7 +175,7 @@ end
 
 local function RegisterThread(PID: number, Coroutine: thread, IsMain: boolean, InitialState: "Waiting" | "Suspended"): KernelThread
 	local Thread: KernelThread = {
-		ThreadId = GetFreeTID(),
+		ThreadId = GetNextTID(),
 		PID = PID,
 		Coroutine = Coroutine,
 		State = InitialState,
@@ -378,7 +368,7 @@ function ProcessScheduler.TerminateThread(ThreadId: number)
 	Thread.State = "Dead"
 end
 
-function ProcessScheduler.ProcessTerminated(PID: number)
+function ProcessScheduler.OnProcessTerminated(PID: number)
 	for ThreadId, Thread in Threads do
 		if Thread.PID ~= PID then
 			continue

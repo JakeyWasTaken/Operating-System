@@ -37,7 +37,7 @@ function ScriptFactory.CreateScript(Source: string, ScriptPath: CPath, ScriptHan
 end
 
 --- Called upon process termination, flushes that processes script cache
-function ScriptFactory.FlushProcessCache(PID: number)
+function ScriptFactory.OnProcessTermination(PID: number)
     if not Cache[PID] then
         return
     end
