@@ -33,8 +33,14 @@ return function(Context: EnvironmentContext)
 
     return function(Target: string)
         if Target:sub(1, 1) == "@" then
-			local Name = Target:sub(2, #Target)
-			local Library = GetLibrary(Name)
+            local Data = Target:sub(2, #Target)
+            local SplitData = Data:split("/")
+            if SplitData[1] ~= "osiris" then
+                error(`unknown alias "{SplitData[1]}"`, 0)
+            end
+
+            local LibraryName = SplitData[2]
+			local Library = GetLibrary(LibraryName)
 			if Library == nil then
 				error(`error requiring "{Target}": library does not exist`, 0)
 			end

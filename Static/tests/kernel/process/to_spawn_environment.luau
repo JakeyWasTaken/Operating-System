@@ -1,4 +1,4 @@
-local process = require("@process")
+local process = require("@osiris/process")
 local environment = process.GetEnvironment()
 
 local exitCode = environment.ExitCode

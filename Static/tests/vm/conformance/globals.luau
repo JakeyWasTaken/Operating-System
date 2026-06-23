@@ -144,6 +144,6 @@ do
 	assert(shared.globalsTestMarker == "set via _G", "a write through _G should be visible through shared, since they're the same table")
 end
 
-assert(_VERSION == "Fiu Interpreter", "_VERSION should identify this as the Fiu interpreter")
+assert(_VERSION == "Osiris", "_VERSION should identify this as Osiris")
 
 return "OK"

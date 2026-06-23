@@ -4,7 +4,7 @@ Exists to test the IOStream process side thread blocking/waking
 
 ]]
 
-local Ok, test = pcall(require, "@test")
+local Ok, test = pcall(require, "@osiris/test")
 if not Ok then
 	return "OK" -- We are testing outside of studio, just skip
 end

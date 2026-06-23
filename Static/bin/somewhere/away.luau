@@ -1,4 +1,4 @@
-print(require("@process").GetPID())
+print(require("@osiris/process").GetPID())
 
 print("AWAY")
 

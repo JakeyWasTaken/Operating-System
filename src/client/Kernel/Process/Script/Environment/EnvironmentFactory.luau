@@ -77,7 +77,7 @@ function EnvironmentFactory.CreateEnvironment(Context: EnvironmentContext)
 
         _G = SharedTable,
         shared = SharedTable,
-        _VERSION = "Fiu Interpreter",
+        _VERSION = "Osiris",
 
         -- --------------------------- Normal Environment --------------------------- --
 

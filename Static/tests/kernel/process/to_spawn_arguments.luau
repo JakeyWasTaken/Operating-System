@@ -1,4 +1,4 @@
-local process = require("@process")
+local process = require("@osiris/process")
 local arguments = process.GetArguments()
 
 local exitCode = arguments[1]

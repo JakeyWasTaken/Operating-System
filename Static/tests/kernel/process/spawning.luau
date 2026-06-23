@@ -1,4 +1,4 @@
-local process = require("@process")
+local process = require("@osiris/process")
 
 -- StdOut carries exactly what the spawned script printed, and Status() blocks
 -- until termination and returns the code passed to exit()
