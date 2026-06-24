@@ -1,6 +1,6 @@
 --[[
 
-    LibProcess / @process
+    LibProcess / process
 
     Process library
 

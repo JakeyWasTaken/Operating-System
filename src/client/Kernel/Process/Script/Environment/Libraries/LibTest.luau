@@ -1,6 +1,6 @@
 --[[
 
-	LibTest / @test
+	LibTest / test
 
 	Testing only library, disabled out of studio
 
