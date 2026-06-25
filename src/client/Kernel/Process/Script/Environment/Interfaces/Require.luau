@@ -1,12 +1,14 @@
-const CPath = require("@kernel/File/Path")
-const FileSystem = require("@kernel/File/FileSystem")
+const CFilePath = require("@kernel/File/FileSystem/FilePath")
+const FileSystemInterface = require("@kernel/File/FileSystemInterface")
+const FileSystemManager = require("@kernel/File/FileSystemManager")
 const EnvironmentContext = require("../EnvironmentContext")
-const FileContext = require("@kernel/File/Context")
+const FileContext = require("@kernel/File/FileContext")
 
 -- All libraries should be added here, otherwise they will be unavailable within processes
 const Libraries = {
     require("../Libraries/LibProcess"),
-    require("../Libraries/LibProcess")
+    require("../Libraries/LibFileSystem"),
+    require("../Libraries/LibTest"),
 }
 
 type EnvironmentContext = EnvironmentContext.EnvironmentContext
@@ -54,12 +56,13 @@ return function(Context: EnvironmentContext)
 		local Process = shared.ProcessFactory.GetProcess(PID)
 		assert(Process, `No process with PID "{PID}"`)
 
-		local FilePath = CPath.new(FilePathStr)
+		local FilePath = CFilePath.new(FilePathStr)
 		if not FilePath:IsValid() then
 			error(`error requiring "{FilePathStr}": invalid path`, 0)
 		end
 
-		if FilePath:GetPathType() == "Relative" then
+		local FirstPart = FilePath:GetParts()[1]
+		if not FirstPart or (FirstPart.Type ~= "Root" and FirstPart.Type ~= "Home") then
 			FilePath = ScriptPath:Append(FilePathStr)
 		end
 
@@ -68,26 +71,27 @@ return function(Context: EnvironmentContext)
 			error(`error requiring "{FilePathStr}": expanded path was invalid`, 0)
 		end
 
-		local Context = FileContext.Copy(Process.FileContext)
-		Context.WorkingDirectory = ScriptPath:ToString()
+		local Context = FileContext(Process.FileContext)
+		Context.WorkingDirectory = ScriptPath:GetString()
 
-		local NodeHandle = FileSystem:Resolve(FilePath, Context)
-		if not NodeHandle.Success then
+		local FS = FileSystemManager.GetActiveFileSystem()
+		if not FS then
+			error(`error requiring "{FilePathStr}": no active file system`, 0)
+		end
+
+		local Node = FS:ResolvePath(FilePath, Context)
+		if not Node then
 			error(`error requiring "{FilePathStr}": no path exists`, 0)
 		end
 
-		local Type = FileSystem:GetType(NodeHandle.Value :: string)
-		if not Type.Success or Type.Value ~= "File" then
+		if not Node:IsFile() then
 			error(`error requiring "{FilePathStr}": provided path does not point to a file`, 0)
 		end
 
-		local Contents = FileSystem:Read(NodeHandle.Value :: string)
-		if not Contents.Success then
-			error(`error requiring "{FilePathStr}": failed to read file contents`, 0)
-		end
+		local Contents = (Node :: FileSystemInterface.IFile):Read()
 
 		-- Make script
-		local Script = shared.ScriptFactory.CreateScript(Contents.Value, FilePath:GetParent(), NodeHandle.Value, PID)
+		local Script = shared.ScriptFactory.CreateScript(Contents, FilePath:GetParent(), Node:GetHandle(), PID)
 		if not Script:IsCompiled() then
 			local CompilationResult = Script:Compile()
 			if not CompilationResult.Success then

@@ -2,15 +2,16 @@
 
 const Class = require("@core/Class")
 const Context = require("@core/General/Context")
-const FileContext = require("@kernel/File/Context")
+const FileContext = require("@kernel/File/FileContext")
 const Result = require("@core/Result")
 const CScript = require("@kernel/Process/Script/Script")
 const CIOStream = require("@core/IO/Stream")
 const CConditionVariable = require("@core/IO/ConditionVariable")
+const Handle = require("@core/Handle")
 
 type IOStream = CIOStream.CIOStream
 type CScript = CScript.CScript
-type FileContext = FileContext.Context
+type FileContext = FileContext.FileContext
 type CConditionVariable<T...> = CConditionVariable.CConditionVariable<T...>
 type Result<T> = Result.Result<T>
 
@@ -24,15 +25,25 @@ export type CProcess = {
 	GetParentPID: (self: CProcess) -> number?,
 	GetChildPIDs: (self: CProcess) -> { number },
 
-	WaitForTermination: (self: CProcess) -> number,
+	--- Waits for termination and returns exit code
+	GetExitCode: (self: CProcess) -> number,
+
+	--- Creates a process-scoped handle, returns the process-scoped handle
+	CreateScopedHandle: (self: CProcess, GlobalHandle: string) -> string,
+	RemoveScopedHandle: (self: CProcess, ScopedHandle: string) -> (),
+
+	GetScopedHandle: (self: CProcess, GlobalHandle: string) -> string?,
+	GetGlobalHandle: (self: CProcess, ScopedHandle: string) -> string?,
 
 	Destroy: (self: CProcess, ExitCode: number) -> (),
 
 	-- --------------------------------- Members -------------------------------- --
 
 	FileContext: FileContext,
+
 	Environment: {[string]: string?},
 	Arguments: {string},
+
 	StartedAt: number,
 
 	StdIn: IOStream,
@@ -45,6 +56,7 @@ export type CProcess = {
 	m_ParentPID: number?,
 	m_ChildPIDs: { number },
 
+	m_HandleTable: { [string]: string },
 } & Class.Base
 
 local CProcess: CProcess = Class("CProcess") :: any
@@ -72,6 +84,8 @@ function CProcess.new(PID: number, Label: string, Environment: {[string]: string
 	self.m_ParentPID = nil
 	self.m_ChildPIDs = {}
 
+	self.m_HandleTable = {}
+
 	return self
 end
 
@@ -87,8 +101,33 @@ function CProcess:GetChildPIDs()
 	return table.clone(self.m_ChildPIDs)
 end
 
-function CProcess:WaitForTermination()
+function CProcess:GetExitCode()
 	return self.m_TerminationCV:Wait()
+end
+
+function CProcess:CreateScopedHandle(GlobalHandle: string)
+	local ScopedHandle = Handle()
+	self.m_HandleTable[ScopedHandle] = GlobalHandle
+
+	return ScopedHandle
+end
+
+function CProcess:RemoveScopedHandle(ScopedHandle: string)
+	self.m_HandleTable[ScopedHandle] = nil
+end
+
+function CProcess:GetScopedHandle(GlobalHandle)
+	for Scoped, Handle in self.m_HandleTable do
+		if Handle == GlobalHandle then
+			return Scoped
+		end
+	end
+
+	return nil
+end
+
+function CProcess:GetGlobalHandle(ScopedHandle: string)
+	return self.m_HandleTable[ScopedHandle]
 end
 
 function CProcess:Destroy(ExitCode: number)

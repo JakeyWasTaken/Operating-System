@@ -5,7 +5,7 @@ const Handle = require("@core/Handle")
 const VendorTypes = require("@vendor/VendorTypes")
 const Result = require("@core/Result")
 const Log = require("@core/Log")
-const CPath = require("@kernel/File/Path")
+const FilePath = require("@kernel/File/FileSystem/FilePath")
 const EnvironmentFactory = require("@kernel/Process/Script/Environment/EnvironmentFactory")
 
 -- Compiler & Interpreter
@@ -14,12 +14,12 @@ const LuauCeptionCompiler = require("@vendor/LuauCeptionCompiler") :: VendorType
 
 type Result<T> = Result.Result<T>
 type PID = number
-type CPath = CPath.CPath
+type CFilePath = FilePath.CFilePath
 type Handle = Handle.Handle
 
 type ScriptState = "Waiting" | "Running" | "Blocked"
 export type CScript = {
-    new: (Source: string, ScriptPath: CPath, ScriptHandle: Handle, PID: PID) -> CScript,
+    new: (Source: string, ScriptPath: CFilePath, ScriptHandle: Handle, PID: PID) -> CScript,
 
 	-- --------------------------------- Methods -------------------------------- --
 
@@ -35,7 +35,7 @@ export type CScript = {
 	-- --------------------------------- Members -------------------------------- --
 
     ScriptHandle: Handle,
-    ScriptPath: CPath,
+    ScriptPath: CFilePath,
     OwnerPID: PID,
 
     m_Source: string,
@@ -51,7 +51,7 @@ local DEFAULT_DEBUG = 1
 
 local CScript: CScript = Class("CScript") :: any
 
-function CScript.new(Source: string, ScriptPath: CPath, ScriptHandle: Handle, OwnerPID: PID)
+function CScript.new(Source: string, ScriptPath: CFilePath, ScriptHandle: Handle, OwnerPID: PID)
     local self: CScript = setmetatable({}, CScript) :: any
     (CScript :: any)(self)
 

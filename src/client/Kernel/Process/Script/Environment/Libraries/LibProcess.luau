@@ -6,19 +6,19 @@
 
 ]]
 
-const CPath = require("@kernel/File/Path")
+const FilePath = require("@kernel/File/FileSystem/FilePath")
 const IOStream = require("@core/IO/Stream")
-const FileContext = require("@kernel/File/Context")
+const FileContext = require("@kernel/File/FileContext")
 
-type FileContext = FileContext.Context
+type FileContext = FileContext.FileContext
 type IOReader = IOStream.IOReader
 type IOWriter = IOStream.IOWriter
-type CPath = CPath.CPath
+type CFilePath = FilePath.CFilePath
 
 return {
 	Name = "process",
     Enabled = true,
-	MakeLibrary = function(LibraryPID: number, ScriptPath: CPath)
+	MakeLibrary = function(LibraryPID: number, ScriptPath: CFilePath)
         return {
             GetPID = function(): number
                 return LibraryPID
@@ -64,12 +64,13 @@ return {
                 local OurProcess = shared.ProcessFactory.GetProcess(LibraryPID)
                 assert(OurProcess, `PID {LibraryPID} did not have a process attributed`)
 
-                local Path = CPath.new(ProgramPath)
+                local Path = FilePath.new(ProgramPath)
                 if not Path:IsValid() then
                     error(`Program path "{ProgramPath}" was invalid`)
                 end
 
-                if Path:GetPathType() == "Relative" then
+                local FirstPart = Path:GetParts()[1]
+                if not FirstPart or (FirstPart.Type ~= "Root" and FirstPart.Type ~= "Home") then
                     Path = ScriptPath:Append(ProgramPath)
                 end
 
@@ -108,7 +109,7 @@ return {
                 -- Hook exit code here, if program exits before we call .Status() we still need to return something
                 local ExitCode = nil
                 task.spawn(function()
-                    ExitCode = SpawnedProcess:WaitForTermination()
+                    ExitCode = SpawnedProcess:GetExitCode()
                 end)
 
                 return {
@@ -123,7 +124,7 @@ return {
                         end
 
                         -- Wait for termination
-                        return SpawnedProcess:WaitForTermination()
+                        return SpawnedProcess:GetExitCode()
                     end,
                 }
             end,

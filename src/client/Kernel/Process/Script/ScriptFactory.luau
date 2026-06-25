@@ -2,10 +2,10 @@
 
 const Handle = require("@core/Handle")
 const CScript = require("./Script")
-const CPath = require("@kernel/File/Path")
+const FilePath = require("@kernel/File/FileSystem/FilePath")
 
 type PID = number
-type CPath = CPath.CPath
+type CFilePath = FilePath.CFilePath
 type Handle = Handle.Handle
 
 local Cache: { [PID]: { [Handle]: any } } = {}
@@ -23,7 +23,7 @@ shared.ScriptFactory = ScriptFactory
 --- @param OwnerPID - The process id that owns this script
 ---
 --- @return `CScript`
-function ScriptFactory.CreateScript(Source: string, ScriptPath: CPath, ScriptHandle: Handle, OwnerPID: number): CScript.CScript
+function ScriptFactory.CreateScript(Source: string, ScriptPath: CFilePath, ScriptHandle: Handle, OwnerPID: number): CScript.CScript
     if Cache[OwnerPID] and Cache[OwnerPID][ScriptHandle] then
         return Cache[OwnerPID][ScriptHandle]
     end

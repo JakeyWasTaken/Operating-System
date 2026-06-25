@@ -1,17 +1,18 @@
 --!strict
 
-const CPath = require("@kernel/File/Path")
+const FilePath = require("@kernel/File/FileSystem/FilePath")
+const FileSystemInterface = require("@kernel/File/FileSystemInterface")
 const CProcess = require("@kernel/Process/Process")
-const Context = require("@kernel/File/Context")
-const FileSystem = require("@kernel/File/FileSystem")
+const FileContext = require("@kernel/File/FileContext")
+const FileSystemManager = require("@kernel/File/FileSystemManager")
 const Result = require("@core/Result")
 const ScriptFactory = require("@kernel/Process/Script/ScriptFactory")
 const Log = require("@core/Log")
 const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
 
 type Result<T> = Result.Result<T>
-type Context = Context.Context
-type CPath = CPath.CPath
+type FileContext = FileContext.FileContext
+type CFilePath = FilePath.CFilePath
 type CProcess = CProcess.CProcess
 
 -- stylua: ignore
@@ -29,7 +30,7 @@ local AllProcesses: { [number]: CProcess } = {}
 local ProcessFactory = {}
 shared.ProcessFactory = ProcessFactory
 
-function ProcessFactory.CreateProcess(ProgramPath: CPath, Environment: { [string]: string? }, Arguments: {string}, ProgramContext: Context): Result<CProcess>
+function ProcessFactory.CreateProcess(ProgramPath: CFilePath, Environment: { [string]: string? }, Arguments: {string}, ProgramContext: FileContext): Result<CProcess>
 	-- Validate environment
 	for K, EnvironmentVariable in Environment do
 		if typeof(K) ~= "string" then
@@ -52,38 +53,39 @@ function ProcessFactory.CreateProcess(ProgramPath: CPath, Environment: { [string
 		end
 	end
 
-	-- Fetch file and validate it & params
-	local FileResult = FileSystem:Resolve(ProgramPath, ProgramContext)
-	if not FileResult.Success then
-		return FileResult :: Result<CProcess>
+	if not FilePath.ValidateStrings({ ProgramContext.WorkingDirectory, ProgramContext.HomeDirectory }) then
+		return Result.new(false, `Program context was in-valid`) :: Result<CProcess>
 	end
 
-	local FileHandle = FileResult.Value :: string
+	local FS = FileSystemManager.GetActiveFileSystem()
+	if not FS then
+		return Result.new(false, `No active file system`) :: Result<CProcess>
+	end
 
-	if FileSystem:GetType(FileHandle).Value ~= "File" then
+	-- Fetch file and validate it & params
+	local Node = FS:ResolvePath(ProgramPath, ProgramContext)
+	if not Node then
+		return Result.new(false, `Program path does not exist`) :: Result<CProcess>
+	end
+
+	if not Node:IsFile() then
 		return Result.new(false, "Program was not a file") :: Result<CProcess>
 	end
 
-	local FileContentsResult = FileSystem:Read(FileHandle)
-	if not FileContentsResult.Success then
-		return FileContentsResult :: Result<CProcess>
-	end
-
-	if not CPath.ValidateContext(ProgramContext) then
-		return Result.new(false, `Program context was in-valid`) :: Result<CProcess>
-	end
+	local File = Node :: FileSystemInterface.IFile
+	local FileContents = File:Read()
 
 	-- Create process & run script
 
 	local PID = GetNextPID()
-	local Label = FileSystem:GetName(FileHandle).Value or "Unknown"
+	local Label = Node:GetName()
 	local Process = CProcess.new(PID, Label, Environment, Arguments, ProgramContext)
 	AllProcesses[PID] = Process
 
 	Log.debug(`Created new process PID: {PID} Label: "{Label}"`)
 
 	-- We pass in the program path parent here as opposed to working directory since they are different
-	local Script = ScriptFactory.CreateScript(FileContentsResult.Value :: string, ProgramPath:GetParent(), FileHandle, PID)
+	local Script = ScriptFactory.CreateScript(FileContents, ProgramPath:GetParent(), Node:GetHandle(), PID)
 
 	local CompilationResult = Script:Compile()
 	if not CompilationResult.Success then

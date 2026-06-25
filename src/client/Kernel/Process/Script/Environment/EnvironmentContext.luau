@@ -1,9 +1,9 @@
-const CPath = require("@kernel/File/Path")
+const FilePath = require("@kernel/File/FileSystem/FilePath")
 
-type CPath = CPath.CPath
+type CFilePath = FilePath.CFilePath
 export type EnvironmentContext = {
     PID: number,
-    ScriptPath: CPath,
+    ScriptPath: CFilePath,
 }
 
 return true
