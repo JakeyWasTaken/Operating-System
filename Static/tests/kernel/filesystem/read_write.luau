@@ -1,6 +1,6 @@
 local fs = require("@osiris/fs")
 
-assert(fs.CreateFile("./read_write_a.txt"), "setup: create a file to read/write")
+fs.CreateFile("./read_write_a.txt")
 local Handle = fs.Open("./read_write_a.txt")
 assert(Handle ~= nil, "setup: open the file to read/write")
 

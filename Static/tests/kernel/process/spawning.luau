@@ -46,13 +46,12 @@ do
 	assert(table.find(process.GetChildPIDs(), Spawned.PID) == nil, "a terminated process should be detached from its parent's child PID list")
 end
 
--- Spawning a script at a path that doesn't exist fails loudly instead of
+-- Spawning a script at a path that doesn't exist fails instead of
 -- silently returning a broken handle
 do
-	local Ok = pcall(function()
-		process.Spawn("./does_not_exist.luau", {}, {}, {})
-	end)
-	assert(not Ok, "spawning a nonexistent program path should error")
+	local Spawned, Err = process.Spawn("./does_not_exist.luau", {}, {}, {})
+	assert(Spawned == nil, "spawning a nonexistent program path should fail")
+	assert(Err ~= "", "a failed Spawn should report a non-empty error message")
 end
 
 -- A spawned process can itself spawn a child process and forward its exit code
@@ -74,8 +73,9 @@ end
 
 -- Terminate refuses to act on a PID that is neither the caller nor one of its children
 do
-	local Ok = pcall(process.Terminate, 2 ^ 20, 0)
-	assert(not Ok, "Terminate should error when targeting a PID that isn't the caller or one of its children")
+	local Ok, Err = process.Terminate(2 ^ 20, 0)
+	assert(not Ok, "Terminate should fail when targeting a PID that isn't the caller or one of its children")
+	assert(Err ~= "", "a failed Terminate should report a non-empty error message")
 end
 
 -- A process can target itself with Terminate
@@ -98,13 +98,14 @@ end
 
 -- Detach refuses to act on a PID that is neither the caller nor one of its children
 do
-	local Ok = pcall(process.Detach, 2 ^ 20)
-	assert(not Ok, "Detach should error when targeting a PID that isn't the caller or one of its children")
+	local Ok, Err = process.Detach(2 ^ 20)
+	assert(not Ok, "Detach should fail when targeting a PID that isn't the caller or one of its children")
+	assert(Err ~= "", "a failed Detach should report a non-empty error message")
 end
 
 -- A process can target itself with Detach harmlessly
 do
-	local Ok = pcall(process.Detach, process.GetPID())
+	local Ok = process.Detach(process.GetPID())
 	assert(Ok, "Detach should succeed when targeting the caller itself")
 end
 

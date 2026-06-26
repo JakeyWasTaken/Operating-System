@@ -1,14 +1,15 @@
 local fs = require("@osiris/fs")
 
-assert(fs.CreateFile("./exclusive_lock_a.txt"), "setup: create a file to lock")
+fs.CreateFile("./exclusive_lock_a.txt")
 
 -- Exclusive opens lock the file against further opens until Close releases the lock
 do
 	local First = fs.Open("./exclusive_lock_a.txt", true)
 	assert(First ~= nil, "the first exclusive open should succeed")
 
-	local Second = fs.Open("./exclusive_lock_a.txt")
+	local Second, Err = fs.Open("./exclusive_lock_a.txt")
 	assert(Second == nil, "a second open should fail while the file is exclusively locked")
+	assert(Err ~= "", "a failed Open should report a non-empty error message")
 
 	fs.Close(First)
 

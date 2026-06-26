@@ -9,11 +9,13 @@ e.g. lune run scripts/darkluaconfig otherconfig.json
 
 local DEBUG_PROFILING = true
 local HAS_COMMENT_FILE = false
+
 -- Globals injected into _G
 local MACROS = {
-	DEV = true,
 	NET_DEV = false,
-	BANK = false,
+
+	MACRO_BANK = true, -- Bank enabled
+	MACRO_TESTING = false, -- Integration testing
 }
 
 local RULES = {
@@ -23,6 +25,7 @@ local RULES = {
 	"remove_empty_do",
 	"remove_nil_declaration",
 	"filter_after_early_return",
+	"remove_comments",
 }
 
 if not DEBUG_PROFILING then
@@ -36,10 +39,14 @@ local REQUIRE_ALIASES = require("./ALIASES")
 local REQUIRE_RULE =
 	'{"rule": "convert_require", "current": {"name": "path", "sources": {%s}}, "target": {"name": "roblox", "rojo_sourcemap": "sourcemap.json", "indexing_style": "wait_for_child"}}'
 local MACRO_RULE = '{"rule": "inject_global_value", "identifier": "%s","value": %s}'
-local COMMENT_RULE = (not MACROS.DEV and HAS_COMMENT_FILE) and '{"rule": "append_text_comment", "location": "start", "file": "COMMENT"}' or ""
+local COMMENT_RULE = HAS_COMMENT_FILE and '{"rule": "append_text_comment", "location": "start", "file": "COMMENT"}' or ""
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
+
+-- Put git hash in macros so we can see it in-code
+local GitHash = process.exec("git", { "log", "-1", "--format=%H" })
+MACROS["GIT_HASH"] = GitHash.stdout:sub(1, 8)
 
 local function Build()
 	local tout = {}

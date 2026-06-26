@@ -1,6 +1,6 @@
 const FileSystemInterface = require("@kernel/File/FileSystemInterface")
 const FileContext = require("@kernel/File/FileContext")
-const FilePath = require("@kernel/File/FileSystem/FilePath")
+const FilePath = require("@kernel/File/FilePath")
 const Result = require("@core/Result")
 const Class = require("@core/Class")
 const Signal = require("@core/Signal")

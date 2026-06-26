@@ -6,7 +6,7 @@
 
 ]]
 
-const FilePath = require("@kernel/File/FileSystem/FilePath")
+const FilePath = require("@kernel/File/FilePath")
 const IOStream = require("@core/IO/Stream")
 const FileContext = require("@kernel/File/FileContext")
 
@@ -36,6 +36,14 @@ return {
                 return Process and Process.Environment or {}
             end,
 
+            GetPermissions = function(): { Elevated: boolean }
+                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                local Process = shared.ProcessFactory.GetProcess(LibraryPID)
+                return {
+                    Elevated = Process:IsElevated()
+                }
+            end,
+
             GetParentPID = function(): number?
                 assert(shared.ProcessFactory, `ProcessFactory was not ready`)
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
@@ -53,7 +61,7 @@ return {
                 Environment: {[string]: string?},
                 Arguments: { string },
                 Options: { FileContext: FileContext?, ForwardStdIO: boolean? }
-            ): {PID: number, StdIn: IOWriter, StdOut: IOReader, StdErr: IOReader, Status: () -> number}
+            ): ({ PID: number, StdIn: IOWriter, StdOut: IOReader, StdErr: IOReader, Status: () -> number }?, string)
 
                 assert(typeof(ProgramPath) == "string", `Expected parameter ProgramPath`)
                 assert(typeof(Environment) == "table", `Expected parameter Environment`)
@@ -66,7 +74,7 @@ return {
 
                 local Path = FilePath.new(ProgramPath)
                 if not Path:IsValid() then
-                    error(`Program path "{ProgramPath}" was invalid`)
+                    return nil, `Program path "{ProgramPath}" was invalid`
                 end
 
                 local FirstPart = Path:GetParts()[1]
@@ -76,7 +84,9 @@ return {
 
                 local FileContext = Options.FileContext or OurProcess.FileContext
                 local SpawningResult = shared.ProcessFactory.CreateProcess(Path, Environment, Arguments, FileContext)
-                assert(SpawningResult.Success, SpawningResult.Reason)
+                if not SpawningResult.Success then
+                    return nil, SpawningResult.Reason
+                end
 
                 local SpawnedProcess = SpawningResult.Value
                 shared.ProcessFactory.SetParentProcess(SpawnedProcess:GetPID(), LibraryPID)
@@ -126,29 +136,31 @@ return {
                         -- Wait for termination
                         return SpawnedProcess:GetExitCode()
                     end,
-                }
+                }, ""
             end,
 
-            Terminate = function(PID: number, ExitCode: number)
+            Terminate = function(PID: number, ExitCode: number): (boolean?, string)
                 assert(shared.ProcessFactory, `ProcessFactory was not ready`)
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
                 -- Check if we can terminate this
                 if PID ~= LibraryPID and not table.find(Process:GetChildPIDs(), PID) then
-                    error(`PID {PID} is not the caller or one of its children`, 0)
+                    return nil, `PID {PID} is not the caller or one of its children`
                 end
 
                 shared.ProcessFactory.TerminateProcess(PID, ExitCode)
+                return true, ""
             end,
 
-            Detach = function(PID: number)
+            Detach = function(PID: number): (boolean?, string)
                 assert(shared.ProcessFactory, `ProcessFactory was not ready`)
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
                 -- Check if we can detach this
                 if PID ~= LibraryPID and not table.find(Process:GetChildPIDs(), PID) then
-                    error(`PID {PID} is not the caller or one of its children`, 0)
+                    return nil, `PID {PID} is not the caller or one of its children`
                 end
 
                 shared.ProcessFactory.DetachProcess(PID)
+                return true, ""
             end,
         }
     end,

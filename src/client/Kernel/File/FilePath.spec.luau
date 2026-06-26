@@ -1,4 +1,4 @@
-local CFilePath = require("@kernel/File/FileSystem/FilePath")
+local CFilePath = require("@kernel/File/FilePath")
 
 return function()
 	-- -------------------------------------------------------------------------

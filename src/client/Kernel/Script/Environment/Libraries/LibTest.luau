@@ -6,7 +6,7 @@
 
 ]]
 
-const FilePath = require("@kernel/File/FileSystem/FilePath")
+const FilePath = require("@kernel/File/FilePath")
 const Context = require("@core/General/Context")
 
 const IOStream = require("@core/IO/Stream")

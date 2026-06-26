@@ -9,6 +9,7 @@
 -- all pass.
 
 local results = {}
+local failed = false
 
 local function reqAndCheck(target: string)
 	local Success, Error = pcall(function(...)
@@ -17,6 +18,7 @@ local function reqAndCheck(target: string)
 	end)
 
 	table.insert(results, `[{target}] {Success and "Succeeded" or `Failed with error: {Error}`}`)
+	failed = failed or not Success
 end
 
 local testFailures = false -- run tests that are expected to fail and throw errors
@@ -36,3 +38,5 @@ end
 for _, result in results do
 	warn(result)
 end
+
+exit(failed and -1 or 0)

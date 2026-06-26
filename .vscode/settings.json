@@ -23,5 +23,9 @@
   "files.exclude": {
     "build/": true,
     "static-build/": true
+  },
+  "luau-lsp.types.definitionFiles": {
+    "0": "C:/LuauDefinitionFiles/globalTypes.d.lua",
+    "1": "./typedefs/globalTypes.d.lua",
   }
 }

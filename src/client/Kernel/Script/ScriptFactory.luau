@@ -2,7 +2,7 @@
 
 const Handle = require("@core/Handle")
 const CScript = require("./Script")
-const FilePath = require("@kernel/File/FileSystem/FilePath")
+const FilePath = require("@kernel/File/FilePath")
 
 type PID = number
 type CFilePath = FilePath.CFilePath
@@ -37,7 +37,7 @@ function ScriptFactory.CreateScript(Source: string, ScriptPath: CFilePath, Scrip
 end
 
 --- Called upon process termination, flushes that processes script cache
-function ScriptFactory.OnProcessTermination(PID: number)
+function ScriptFactory.OnProcessTerminated(PID: number)
     if not Cache[PID] then
         return
     end
@@ -47,6 +47,33 @@ function ScriptFactory.OnProcessTermination(PID: number)
     end
 
     Cache[PID] = nil
+end
+
+--- Returns the size of every scripts source and bytecode combined
+function ScriptFactory.GetCacheSize()
+    local Size = 0
+
+    for _, Scripts in Cache do
+        for _, Script in Scripts do
+            Size += #Script.m_Source
+            Size += Script.m_Bytecode and #Script.m_Bytecode or 0
+        end
+    end
+
+    return Size
+end
+
+--- Returns the amount of scripts cached
+function ScriptFactory.GetCacheCount()
+    local Count = 0
+
+    for _, Scripts in Cache do
+        for _, Script in Scripts do
+            Count += 1
+        end
+    end
+
+    return Count
 end
 
 return ScriptFactory

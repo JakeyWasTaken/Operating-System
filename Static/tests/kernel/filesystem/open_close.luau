@@ -1,6 +1,6 @@
 local fs = require("@osiris/fs")
 
-assert(fs.CreateFile("./open_close_a.txt"), "setup: create a file to open")
+fs.CreateFile("./open_close_a.txt")
 local Setup = fs.Open("./open_close_a.txt")
 assert(Setup ~= nil, "setup: open the file to write its initial contents")
 fs.Write(Setup, "hello", 0)
@@ -16,7 +16,9 @@ end
 
 -- Open fails for a path that doesn't exist
 do
-	assert(fs.Open("./does_not_exist.txt") == nil, "Open should fail for a file that doesn't exist")
+	local Handle, Err = fs.Open("./does_not_exist.txt")
+	assert(Handle == nil, "Open should fail for a file that doesn't exist")
+	assert(Err ~= "", "a failed Open should report a non-empty error message")
 end
 
 -- Re-opening the same file from the same process reuses the same scoped handle
@@ -31,7 +33,10 @@ end
 do
 	local Opened = fs.Open("./open_close_a.txt")
 	fs.Close(Opened)
-	assert(fs.Read(Opened) == nil, "reading a closed handle should fail")
+
+	local Data, Err = fs.Read(Opened)
+	assert(Data == nil, "reading a closed handle should fail")
+	assert(Err ~= "", "a failed Read should report a non-empty error message")
 end
 
 return "OK"

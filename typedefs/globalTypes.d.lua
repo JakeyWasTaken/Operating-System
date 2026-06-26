@@ -1,0 +1,1 @@
+declare exit: (ExitCode: number) -> ()

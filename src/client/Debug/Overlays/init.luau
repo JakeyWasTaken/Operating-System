@@ -1,6 +1,7 @@
 --- Should require all the overlays so they are rendered
 local Overlays = {
-    require("@self/Process")
+	require("@self/Script"),
+	require("@self/Process"),
 }
 
 for _, Overlay in Overlays do

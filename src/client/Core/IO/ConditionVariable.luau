@@ -5,12 +5,21 @@
 ]]
 
 const Class = require("@core/Class")
+const Log = require("@core/Log")
 const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
 
 export type CConditionVariable<T...> = {
     -- --------------------------------- Methods -------------------------------- --
 
     --- Blocks the caller thread, returns value provided by ::Notify
+    --- **DO NOT** call ::Wait() in a require thead
+    ---
+    --- e.g:
+    --- ```
+    --- require("./module")
+    --- -- ./module:
+    --- ConditionVariable:Wait() -- DO NOT DO, this will forever yield the requirer
+    --- ```
     Wait: (self: CConditionVariable<T...>) -> T...,
 
     --- Awakes all blocked threads
@@ -30,22 +39,30 @@ function CConditionVariable:Wait()
         table.insert(self.m_BlockedKernelThreads, CurrentThreadId)
         return ProcessScheduler.Block(CurrentThreadId)
     else
-        table.insert(self.m_BlockedThreads, coroutine.running())
+        local Thread = coroutine.running()
+
+        table.insert(self.m_BlockedThreads, Thread)
         return coroutine.yield()
     end
 end
 
 function CConditionVariable:Notify(...)
-    for _, KernelThread in self.m_BlockedKernelThreads do
+    local KernelThreads = self.m_BlockedKernelThreads
+    local Threads = self.m_BlockedThreads
+
+    self.m_BlockedKernelThreads = {}
+    self.m_BlockedThreads = {}
+
+    for _, KernelThread in KernelThreads do
         ProcessScheduler.Unblock(KernelThread, ...)
     end
 
-    for _, Thread in self.m_BlockedThreads do
-        coroutine.resume(Thread, ...)
+    for _, Thread in Threads do
+        local Ok, Err = coroutine.resume(Thread, ...)
+        if not Ok then
+            Log.warn(`ConditionVariable:Notify resumed thread errored: {Err}`)
+        end
     end
-
-    table.clear(self.m_BlockedKernelThreads)
-    table.clear(self.m_BlockedThreads)
 end
 
 return {

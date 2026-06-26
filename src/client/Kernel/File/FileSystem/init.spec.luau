@@ -1,6 +1,6 @@
 local CFileSystem = require("@kernel/File/FileSystem")
-local FilePath = require("@kernel/File/FileSystem/FilePath")
 local FileContext = require("@kernel/File/FileContext")
+local FilePath = require("@kernel/File/FilePath")
 
 return function()
 	local Context = FileContext()

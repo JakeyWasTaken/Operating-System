@@ -5,9 +5,9 @@ const ProcessFactory = require("@kernel/Process/ProcessFactory")
 local Overlay = {}
 
 function Overlay.Render()
-    grOverlay.Begin("Process")
+    grOverlay.Begin("Process", Color3.new(0.4, 0.4, 0.4))
 
-    grOverlay.Begin("List")
+    grOverlay.Begin("List", Color3.new(0.2, 0.2, 0.2))
 
     for _, Process in ProcessFactory.GetAllProcesses() do
         grOverlay.Begin(`Process Id: {Process:GetPID()}`, Color3.new(0.8, 0.4, 0.4))
@@ -30,7 +30,7 @@ function Overlay.Render()
 
     grOverlay.End()
 
-    grOverlay.Begin("Threads")
+    grOverlay.Begin("Threads", Color3.new(0.2, 0.2, 0.2))
 
     for _, Thread in ProcessScheduler.GetAllThreads() do
         grOverlay.Begin(`Thread Id: {Thread.ThreadId}`, Color3.new(0.8, 0.4, 0.4))

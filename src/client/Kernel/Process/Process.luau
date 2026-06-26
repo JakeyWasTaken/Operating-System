@@ -4,7 +4,7 @@ const Class = require("@core/Class")
 const Context = require("@core/General/Context")
 const FileContext = require("@kernel/File/FileContext")
 const Result = require("@core/Result")
-const CScript = require("@kernel/Process/Script/Script")
+const CScript = require("@kernel/Script/Script")
 const CIOStream = require("@core/IO/Stream")
 const CConditionVariable = require("@core/IO/ConditionVariable")
 const Handle = require("@core/Handle")
@@ -35,6 +35,9 @@ export type CProcess = {
 	GetScopedHandle: (self: CProcess, GlobalHandle: string) -> string?,
 	GetGlobalHandle: (self: CProcess, ScopedHandle: string) -> string?,
 
+	IsElevated: (self: CProcess) -> boolean,
+	SetElevated: (self: CProcess, Elevated: boolean) -> (),
+
 	Destroy: (self: CProcess, ExitCode: number) -> (),
 
 	-- --------------------------------- Members -------------------------------- --
@@ -51,6 +54,7 @@ export type CProcess = {
 	StdErr: IOStream,
 
 	m_TerminationCV: CConditionVariable<number>,
+	m_Elevated: boolean,
 
 	m_PID: number,
 	m_ParentPID: number?,
@@ -128,6 +132,14 @@ end
 
 function CProcess:GetGlobalHandle(ScopedHandle: string)
 	return self.m_HandleTable[ScopedHandle]
+end
+
+function CProcess:IsElevated()
+	return self.m_Elevated
+end
+
+function CProcess:SetElevated(Elevated: boolean)
+	self.m_Elevated = Elevated
 end
 
 function CProcess:Destroy(ExitCode: number)

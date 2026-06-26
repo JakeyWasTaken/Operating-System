@@ -1,12 +1,12 @@
 --!strict
 
-const FilePath = require("@kernel/File/FileSystem/FilePath")
+const FilePath = require("@kernel/File/FilePath")
 const FileSystemInterface = require("@kernel/File/FileSystemInterface")
 const CProcess = require("@kernel/Process/Process")
 const FileContext = require("@kernel/File/FileContext")
 const FileSystemManager = require("@kernel/File/FileSystemManager")
 const Result = require("@core/Result")
-const ScriptFactory = require("@kernel/Process/Script/ScriptFactory")
+const ScriptFactory = require("@kernel/Script/ScriptFactory")
 const Log = require("@core/Log")
 const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
 
@@ -57,13 +57,13 @@ function ProcessFactory.CreateProcess(ProgramPath: CFilePath, Environment: { [st
 		return Result.new(false, `Program context was in-valid`) :: Result<CProcess>
 	end
 
-	local FS = FileSystemManager.GetActiveFileSystem()
-	if not FS then
+	local FileSystem = FileSystemManager.GetActiveFileSystem()
+	if not FileSystem then
 		return Result.new(false, `No active file system`) :: Result<CProcess>
 	end
 
 	-- Fetch file and validate it & params
-	local Node = FS:ResolvePath(ProgramPath, ProgramContext)
+	local Node = FileSystem:ResolvePath(ProgramPath, ProgramContext)
 	if not Node then
 		return Result.new(false, `Program path does not exist`) :: Result<CProcess>
 	end
@@ -117,7 +117,7 @@ function ProcessFactory.TerminateProcess(PID: number, ExitCode: number)
 	ProcessFactory.DetachProcess(PID)
 
 	Process:Destroy(ExitCode)
-	ScriptFactory.OnProcessTermination(PID)
+	ScriptFactory.OnProcessTerminated(PID)
 	ProcessScheduler.OnProcessTerminated(PID)
 	AllProcesses[PID] = nil
 

@@ -1,4 +1,5 @@
 local results = {}
+local failed = false
 
 local function reqAndCheck(target: string)
 	local Success, Error = pcall(function(...)
@@ -7,6 +8,7 @@ local function reqAndCheck(target: string)
 	end)
 
 	table.insert(results, `[{target}] {Success and "Succeeded" or `Failed with error: {Error}`}`)
+	failed = failed or not Success
 end
 
 do -- require conformance checks
@@ -29,3 +31,5 @@ end
 for _, result in results do
 	warn(result)
 end
+
+exit(failed and -1 or 0)

@@ -1,4 +1,4 @@
-const CFilePath = require("@kernel/File/FileSystem/FilePath")
+const CFilePath = require("@kernel/File/FilePath")
 const FileSystemInterface = require("@kernel/File/FileSystemInterface")
 const FileSystemManager = require("@kernel/File/FileSystemManager")
 const EnvironmentContext = require("../EnvironmentContext")

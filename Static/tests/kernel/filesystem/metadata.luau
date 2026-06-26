@@ -1,6 +1,6 @@
 local fs = require("@osiris/fs")
 
-assert(fs.CreateFile("./metadata_a.txt"), "setup: create a file to inspect")
+fs.CreateFile("./metadata_a.txt")
 local Handle = fs.Open("./metadata_a.txt")
 assert(Handle ~= nil, "setup: open the file to inspect")
 

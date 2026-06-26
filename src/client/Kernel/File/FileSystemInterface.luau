@@ -8,7 +8,7 @@
 const Result = require("@core/Result")
 const Signal = require("@core/Signal")
 const FileContext = require("@kernel/File/FileContext")
-const CFilePath = require("@kernel/File/FileSystem/FilePath")
+const CFilePath = require("@kernel/File/FilePath")
 
 type Result<T> = Result.Result<T>
 type Signal<T...> = Signal.Signal<T...>

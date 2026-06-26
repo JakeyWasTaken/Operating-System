@@ -1,5 +1,7 @@
 const Log = require("@core/Log")
 
+const RunService = game:GetService("RunService")
+
 -- No builtin type name for runtime userdata. Same trick VendorTypes.luau uses.
 type userdata = any
 
@@ -76,6 +78,10 @@ local function ResumeThread(Thread: KernelThread, ...: any): (boolean, ...any)
 	if coroutine.status(Thread.Coroutine) == "dead" then
 		Thread.State = "Dead"
 		Thread.ExitCode = Ok and 0 or -1
+
+		if not Ok then
+			Log.warn(`Thread PID: {Thread.PID} TID: {Thread.ThreadId} errored: {Results[2]}`)
+		end
 	elseif Thread.State == "Running" then
 		-- It yielded, but nothing set a more specific state first.
 		-- A bare coroutine.yield(), for example. Nothing scheduled an
@@ -94,7 +100,19 @@ function ProcessScheduler.IsThreadHandle(Value: unknown): boolean
 end
 
 function ProcessScheduler.Tick()
-	for ThreadId, Thread in Threads do
+	-- Snapshot the IDs first. ResumeThread below can spawn new threads, and inserting
+	-- into Threads mid-pairs is asking for trouble - they just wait for next tick instead.
+	local ThreadIds = {}
+	for ThreadId in Threads do
+		table.insert(ThreadIds, ThreadId)
+	end
+
+	for _, ThreadId in ThreadIds do
+		local Thread = Threads[ThreadId]
+		if not Thread then
+			continue -- Removed by an earlier iteration this same tick (e.g. via JumpExecution)
+		end
+
 		if Thread.State == "Dead" then
 			if coroutine.status(Thread.Coroutine) ~= "dead" then
 				coroutine.close(Thread.Coroutine)
@@ -377,5 +395,7 @@ function ProcessScheduler.OnProcessTerminated(PID: number)
 		ProcessScheduler.TerminateThread(ThreadId)
 	end
 end
+
+RunService.Heartbeat:Connect(ProcessScheduler.Tick)
 
 return ProcessScheduler

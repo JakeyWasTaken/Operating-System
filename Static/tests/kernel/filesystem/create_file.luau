@@ -2,7 +2,8 @@ local fs = require("@osiris/fs")
 
 -- CreateFile creates a new file; Open is needed afterwards to get a usable handle
 do
-	assert(fs.CreateFile("./create_file_a.txt"), "CreateFile should succeed for a new file")
+	local Ok = fs.CreateFile("./create_file_a.txt")
+	assert(Ok, "CreateFile should succeed for a new file")
 
 	local Handle = fs.Open("./create_file_a.txt")
 	assert(Handle ~= nil, "should be able to open the freshly created file")
@@ -15,12 +16,16 @@ end
 
 -- CreateFile fails when the file already exists
 do
-	assert(fs.CreateFile("./create_file_a.txt") == false, "CreateFile should fail when the file already exists")
+	local Ok, Err = fs.CreateFile("./create_file_a.txt")
+	assert(not Ok, "CreateFile should fail when the file already exists")
+	assert(Err ~= "", "a failed CreateFile should report a non-empty error message")
 end
 
 -- CreateFile fails when the parent directory doesn't exist
 do
-	assert(fs.CreateFile("./missing_dir/leaf.txt") == false, "CreateFile should fail when the parent directory doesn't exist")
+	local Ok, Err = fs.CreateFile("./missing_dir/leaf.txt")
+	assert(not Ok, "CreateFile should fail when the parent directory doesn't exist")
+	assert(Err ~= "", "a failed CreateFile should report a non-empty error message")
 end
 
 return "OK"

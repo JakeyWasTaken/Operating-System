@@ -1,4 +1,4 @@
-const FilePath = require("@kernel/File/FileSystem/FilePath")
+const FilePath = require("@kernel/File/FilePath")
 
 type CFilePath = FilePath.CFilePath
 export type EnvironmentContext = {

@@ -5,8 +5,8 @@ const Handle = require("@core/Handle")
 const VendorTypes = require("@vendor/VendorTypes")
 const Result = require("@core/Result")
 const Log = require("@core/Log")
-const FilePath = require("@kernel/File/FileSystem/FilePath")
-const EnvironmentFactory = require("@kernel/Process/Script/Environment/EnvironmentFactory")
+const FilePath = require("@kernel/File/FilePath")
+const EnvironmentFactory = require("@kernel/Script/Environment/EnvironmentFactory")
 
 -- Compiler & Interpreter
 const Fiu = require("@vendor/Fiu") :: VendorTypes.Fiu

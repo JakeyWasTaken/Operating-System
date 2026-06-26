@@ -1,5 +1,5 @@
 const FileSystemInterface = require("@kernel/File/FileSystemInterface")
-const FilePath = require("@kernel/File/FileSystem/FilePath")
+const FilePath = require("@kernel/File/FilePath")
 const NodeLocks = require("@kernel/File/FileSystem/NodeLocks")
 const Handle = require("@core/Handle")
 
