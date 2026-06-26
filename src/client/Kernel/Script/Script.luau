@@ -17,7 +17,6 @@ type PID = number
 type CFilePath = FilePath.CFilePath
 type Handle = Handle.Handle
 
-type ScriptState = "Waiting" | "Running" | "Blocked"
 export type CScript = {
     new: (Source: string, ScriptPath: CFilePath, ScriptHandle: Handle, PID: PID) -> CScript,
 

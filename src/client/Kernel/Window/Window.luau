@@ -1,7 +1,10 @@
 const Class = require("@core/Class")
 const Handle = require("@core/Handle")
+const JDI = require("@vendor/JustDrawIt")
 
 const Camera = workspace.CurrentCamera
+
+type VNode = JDI.VNode
 
 export type CWindow = {
 	new: () -> CWindow,
@@ -22,6 +25,10 @@ export type CWindow = {
     GetSize: (self: CWindow) -> Vector2,
     GetPosition: (self: CWindow) -> Vector2,
 
+    --- The draw callback **MUST NOT** yield
+    SetDrawCallback: (self: CWindow, Callback: () -> VNode) -> (),
+    GetDrawCallback: (self: CWindow) -> ( () -> VNode ),
+
     BringToTop: (self: CWindow) -> (),
     GetZIndex: (self: CWindow) -> number,
 
@@ -35,6 +42,8 @@ export type CWindow = {
     m_Minimized: boolean,
     m_Fullscreen: boolean,
     m_ZIndex: number,
+
+    m_DrawCallback: () -> ()?,
 } & Class.Base
 
 local LastHighestZIndex = 0
@@ -51,6 +60,8 @@ function CWindow.new()
     self.m_Minimized = false
     self.m_Fullscreen = false
     self.m_ZIndex = 0
+
+    self.m_DrawCallback = nil
 
 	return self
 end
@@ -97,6 +108,14 @@ function CWindow:GetPosition()
     end
 
     return Vector2.zero
+end
+
+function CWindow:SetDrawCallback(Callback: () -> VNode)
+    self.m_DrawCallback = Callback
+end
+
+function CWindow:GetDrawCallback()
+    return self.m_DrawCallback
 end
 
 function CWindow:BringToTop()

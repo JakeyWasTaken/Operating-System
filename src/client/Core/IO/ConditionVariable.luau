@@ -34,6 +34,8 @@ export type CConditionVariable<T...> = {
 local CConditionVariable: CConditionVariable<...any> = Class("CConditionVariable")
 
 function CConditionVariable:Wait()
+    assert(ProcessScheduler.IsBlockingAllowed(), "ConditionVariable:Wait blocked inside a non-blocking context (e.g. a draw callback's root coroutine)")
+
     local CurrentThreadId = ProcessScheduler.GetCurrentThreadId()
     if CurrentThreadId then
         table.insert(self.m_BlockedKernelThreads, CurrentThreadId)

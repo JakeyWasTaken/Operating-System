@@ -30,6 +30,11 @@ end
 
 local Threads: { [number]: KernelThread } = {}
 
+-- Coroutines currently running a "must not block" call (e.g. a window draw callback).
+-- Keyed by the exact coroutine, counted to allow re-entry. A thread spawned from inside
+-- one of these isn't itself guarded - it runs on its own coroutine, not this one.
+local GuardedThreads: { [thread]: number } = setmetatable({}, { __mode = "k" }) :: any
+
 -- Scripts only ever hold this newproxy, never a real thread.
 -- Everything they do with it comes back through us to resolve a KernelThread.
 -- Weak both ways, so dropped handles and dead threads just disappear.
@@ -94,6 +99,26 @@ local function ResumeThread(Thread: KernelThread, ...: any): (boolean, ...any)
 end
 
 local ProcessScheduler = {}
+
+--- Runs fn on the calling coroutine with blocking disallowed for its duration.
+--- IsBlockingAllowed (checked by Sleep and ConditionVariable:Wait) returns false for
+--- as long as fn is running. Threads it spawns aren't covered, since they run on their
+--- own coroutine - only this exact call stack is guarded.
+function ProcessScheduler.RunNonBlocking(fn: (...any) -> (), ...: any): (boolean, unknown?)
+	local Thread = coroutine.running()
+	GuardedThreads[Thread] = (GuardedThreads[Thread] or 0) + 1
+
+	local Ok, Err = pcall(fn, ...)
+
+	local Remaining = GuardedThreads[Thread] - 1
+	GuardedThreads[Thread] = if Remaining > 0 then Remaining else nil
+
+	return Ok, Err
+end
+
+function ProcessScheduler.IsBlockingAllowed(): boolean
+	return not GuardedThreads[coroutine.running()]
+end
 
 function ProcessScheduler.IsThreadHandle(Value: unknown): boolean
 	return ResolveHandle(Value) ~= nil
@@ -162,6 +187,8 @@ function ProcessScheduler.Tick()
 end
 
 function ProcessScheduler.Sleep(ThreadId: number, Seconds: number)
+	assert(ProcessScheduler.IsBlockingAllowed(), "task.wait blocked inside a non-blocking context (e.g. a draw callback's root coroutine)")
+
 	local Thread = Threads[ThreadId]
 	if not Thread then
 		return
