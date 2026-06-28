@@ -8,7 +8,9 @@ const FileContext = require("@kernel/File/FileContext")
 const Libraries = {
     require("../Libraries/LibProcess"),
     require("../Libraries/LibFileSystem"),
+    require("../Libraries/LibWindow"),
     require("../Libraries/LibTest"),
+    require("../Libraries/LibTOML"),
 }
 
 type EnvironmentContext = EnvironmentContext.EnvironmentContext

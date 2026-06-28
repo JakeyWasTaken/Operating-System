@@ -62,9 +62,14 @@ return {
             -- ----------------------------- Tree Operations ----------------------------- --
 
             CreateFile = function(Path: string): (boolean?, string)
-                assert(typeof(Path) == "string", "Expected Path to be of type string")
+                if typeof(Path) ~= "string" then
+                    return nil, "Expected Path to be of type string"
+                end
 
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -81,9 +86,14 @@ return {
             end,
 
             CreateDirectory = function(Path: string): (boolean?, string)
-                assert(typeof(Path) == "string", "Expected Path to be of type string")
+                if typeof(Path) ~= "string" then
+                    return nil, "Expected Path to be of type string"
+                end
 
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -104,9 +114,14 @@ return {
             --- Fails if the node (or any descendant) is currently locked - close any
             --- open handles on it first.
             Delete = function(Path: string): (boolean?, string)
-                assert(typeof(Path) == "string", "Expected Path to be of type string")
+                if typeof(Path) ~= "string" then
+                    return nil, "Expected Path to be of type string"
+                end
 
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -126,12 +141,54 @@ return {
                 return true, ""
             end,
 
+            --- Lists the immediate children of the directory at Path.
+            List = function(Path: string): ({ { Name: string, IsDirectory: boolean } }?, string)
+                if typeof(Path) ~= "string" then
+                    return nil, "Expected Path to be of type string"
+                end
+
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
+                local Process = shared.ProcessFactory.GetProcess(LibraryPID)
+
+                local FileSystem = FileSystemManager.GetActiveFileSystem()
+                if not FileSystem then
+                    return nil, "no active file system"
+                end
+
+                local Node = FileSystem:ResolvePath(ResolveScriptPath(Path), Process.FileContext)
+                if not Node then
+                    return nil, `"{Path}" does not exist`
+                end
+
+                if not Node:IsDirectory() then
+                    return nil, `"{Path}" is not a directory`
+                end
+
+                local Entries = {}
+                for _, Child in (Node :: IDirectory):GetChildren() do
+                    table.insert(Entries, {
+                        Name = Child:GetName(),
+                        IsDirectory = Child:IsDirectory(),
+                    })
+                end
+
+                return Entries, ""
+            end,
+
             -- ------------------------------ Open / Close ------------------------------- --
 
             Open = function(Path: string, Exclusive: boolean?): (string?, string)
-                assert(typeof(Path) == "string", "Expected Path to be of type string")
+                if typeof(Path) ~= "string" then
+                    return nil, "Expected Path to be of type string"
+                end
 
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -169,8 +226,14 @@ return {
             -- ----------------------------- Node Operations ---------------------------- --
 
             Close = function(ScopedHandle: string): (boolean?, string)
-                assert(typeof(ScopedHandle) == "string", "Expected ScopedHandle to be of type string")
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if typeof(ScopedHandle) ~= "string" then
+                    return nil, "Expected ScopedHandle to be of type string"
+                end
+
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -190,8 +253,14 @@ return {
             end,
 
             Read = function(ScopedHandle: string): (string?, string)
-                assert(typeof(ScopedHandle) == "string", "Expected ScopedHandle to be of type string")
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if typeof(ScopedHandle) ~= "string" then
+                    return nil, "Expected ScopedHandle to be of type string"
+                end
+
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -213,10 +282,22 @@ return {
             end,
 
             Write = function(ScopedHandle: string, Data: string, Offset: number): (boolean?, string)
-                assert(typeof(ScopedHandle) == "string", "Expected ScopedHandle to be of type string")
-                assert(typeof(Data) == "string", "Expected data to be of type string")
-                assert(Offset and typeof(Offset) == "number", "Expected offset to be of type number")
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if typeof(ScopedHandle) ~= "string" then
+                    return nil, "Expected ScopedHandle to be of type string"
+                end
+
+                if typeof(Data) ~= "string" then
+                    return nil, "Expected data to be of type string"
+                end
+
+                if typeof(Offset) ~= "number" then
+                    return nil, "Expected offset to be of type number"
+                end
+
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -240,8 +321,14 @@ return {
             end,
 
             GetMetadata = function(ScopedHandle: string): (FileSystemInterface.NodeMetadata?, string)
-                assert(typeof(ScopedHandle) == "string", "Expected ScopedHandle to be of type string")
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if typeof(ScopedHandle) ~= "string" then
+                    return nil, "Expected ScopedHandle to be of type string"
+                end
+
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -263,8 +350,14 @@ return {
             end,
 
             GetName = function(ScopedHandle: string): (string?, string)
-                assert(typeof(ScopedHandle) == "string", "Expected ScopedHandle to be of type string")
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if typeof(ScopedHandle) ~= "string" then
+                    return nil, "Expected ScopedHandle to be of type string"
+                end
+
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -287,9 +380,18 @@ return {
 
             --- Renames the node in place. Fails if a sibling already has that name.
             Rename = function(ScopedHandle: string, NewName: string): (boolean?, string)
-                assert(typeof(ScopedHandle) == "string", "Expected ScopedHandle to be of type string")
-                assert(typeof(NewName) == "string", "Expected NewName to be of type string")
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if typeof(ScopedHandle) ~= "string" then
+                    return nil, "Expected ScopedHandle to be of type string"
+                end
+
+                if typeof(NewName) ~= "string" then
+                    return nil, "Expected NewName to be of type string"
+                end
+
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()
@@ -323,9 +425,18 @@ return {
             --- sibling there already has this node's name, or if the destination is
             --- the node itself or one of its own descendants.
             Move = function(ScopedHandle: string, DestinationPath: string): (boolean?, string)
-                assert(typeof(ScopedHandle) == "string", "Expected ScopedHandle to be of type string")
-                assert(typeof(DestinationPath) == "string", "Expected DestinationPath to be of type string")
-                assert(shared.ProcessFactory, `ProcessFactory was not ready`)
+                if typeof(ScopedHandle) ~= "string" then
+                    return nil, "Expected ScopedHandle to be of type string"
+                end
+
+                if typeof(DestinationPath) ~= "string" then
+                    return nil, "Expected DestinationPath to be of type string"
+                end
+
+                if not shared.ProcessFactory then
+                    return nil, "ProcessFactory was not ready"
+                end
+
                 local Process = shared.ProcessFactory.GetProcess(LibraryPID)
 
                 local FileSystem = FileSystemManager.GetActiveFileSystem()

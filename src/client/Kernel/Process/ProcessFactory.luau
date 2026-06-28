@@ -9,6 +9,7 @@ const Result = require("@core/Result")
 const ScriptFactory = require("@kernel/Script/ScriptFactory")
 const Log = require("@core/Log")
 const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
+const WindowFactory = require("@kernel/Window/WindowFactory")
 
 type Result<T> = Result.Result<T>
 type FileContext = FileContext.FileContext
@@ -119,6 +120,7 @@ function ProcessFactory.TerminateProcess(PID: number, ExitCode: number)
 	Process:Destroy(ExitCode)
 	ScriptFactory.OnProcessTerminated(PID)
 	ProcessScheduler.OnProcessTerminated(PID)
+	WindowFactory.OnProcessTerminated(PID)
 	AllProcesses[PID] = nil
 
 	Log.debug(`Terminated process PID: {PID} ExitCode: {ExitCode}`)

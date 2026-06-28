@@ -1,0 +1,12 @@
+[Service]
+Name = "Shell Service"
+
+[Process]
+Exec = "../bin/Shell/main.luau"
+Arguments = ["A", "B"]
+Delay = 0
+AutoRestart = true # When true, will restart the service upon exit
+
+[Process.Environment]
+A = "B"
+B = "A"

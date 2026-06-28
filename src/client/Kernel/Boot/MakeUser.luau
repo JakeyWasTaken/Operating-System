@@ -3,9 +3,12 @@ const BootInterface = require("@kernel/Interface/Interfaces/BootInterface")
 
 const Players = game:GetService("Players")
 
-local Name = Players.LocalPlayer.DisplayName
-local UserId = UserRegistry.MakeUser(Name, true)
+local User = UserRegistry.MakeUser(Players.LocalPlayer.DisplayName, true)
 
-BootInterface.PushString(`Made elevated user "{Name}" [{UserId}]`)
+if User then
+    BootInterface.PushString(`Made elevated user "{User.Name}" [{User.Id}]`)
+else
+    BootInterface.PushString(`Failed to create elevated user, cannot boot`)
+end
 
-return true
+return User ~= nil

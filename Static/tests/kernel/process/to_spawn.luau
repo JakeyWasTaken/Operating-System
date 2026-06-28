@@ -1,3 +1,3 @@
 print("Hello!")
-task.wait(5)
+task.wait(1)
 exit(0)

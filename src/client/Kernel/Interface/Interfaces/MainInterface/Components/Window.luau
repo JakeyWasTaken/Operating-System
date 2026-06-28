@@ -28,6 +28,7 @@ return function(Handle: string, Window: CWindow)
         Position = GetPosition,
         AnchorPoint = Vector2.zero,
         ZIndex = Window:GetZIndex(),
+        ClipsDescendants = true,
 
         BackgroundColor3 = Color3.new(0, 0, 0),
 

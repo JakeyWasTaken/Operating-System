@@ -100,6 +100,20 @@ function EnvironmentFactory.CreateEnvironment(Context: EnvironmentContext)
         Vector2int16 = Vector2int16,
 		CFrame = CFrame,
 
+        -- GUI datatypes, for the window library's draw callbacks
+        Enum = Enum,
+        UDim = UDim,
+        UDim2 = UDim2,
+        Rect = Rect,
+        Color3 = Color3,
+        BrickColor = BrickColor,
+        Font = Font,
+        ColorSequence = ColorSequence,
+        ColorSequenceKeypoint = ColorSequenceKeypoint,
+        NumberSequence = NumberSequence,
+        NumberSequenceKeypoint = NumberSequenceKeypoint,
+        NumberRange = NumberRange,
+
 		tick = tick,
 		time = time,
 		elapsedTime = elapsedTime,

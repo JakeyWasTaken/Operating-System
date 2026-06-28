@@ -7,4 +7,5 @@ return {
 	["client"] = "src/client",
 	["shared"] = "src/shared",
 	["server"] = "src/server",
+	["osiris"] = "typedefs/libraries",
 }

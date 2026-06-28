@@ -45,7 +45,7 @@ function process.Spawn(
 	ProgramPath: string,
 	Environment: { [string]: string? },
 	Arguments: { string },
-	Options: { FileContext: FileContext?, ForwardStdIO: boolean? }
+	Options: { FileContext: FileContext?, ForwardStdIO: boolean?, Elevated: boolean? }
 ): ({ PID: number, StdIn: IOWriter, StdOut: IOReader, StdErr: IOReader, Status: () -> number }?, string)
 	return nil :: any
 end

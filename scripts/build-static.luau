@@ -55,7 +55,14 @@ local function ProcessDirectory(RelativePath: string)
 			ProcessDirectory(EntryRelativePath)
 		else
 			local Contents = fs.readFile(EntrySourcePath)
-			fs.writeFile(`{OUTPUT_DIR}/{EntryRelativePath}`, WrapFile(Name, Contents))
+
+			-- The wrapped module must end in .luau so rojo syncs it as a
+			-- ModuleScript. The original filename is preserved in Name, so the
+			-- VFS still sees e.g. "test.service".
+			local OutputName = Name:match("%.luau?$") and Name or `{Name}.luau`
+			local OutputRelativePath = RelativePath == "" and OutputName or `{RelativePath}/{OutputName}`
+
+			fs.writeFile(`{OUTPUT_DIR}/{OutputRelativePath}`, WrapFile(Name, Contents))
 			FileCount += 1
 		end
 	end

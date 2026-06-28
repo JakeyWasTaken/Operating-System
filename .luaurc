@@ -3,6 +3,7 @@
     "client": "src/client",
     "core": "src/client/Core",
     "kernel": "src/client/Kernel",
+    "osiris": "typedefs/libraries",
     "server": "src/server",
     "shared": "src/shared",
     "vendor": "vendor"

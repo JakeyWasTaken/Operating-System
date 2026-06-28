@@ -6,6 +6,6 @@ export type FileContext = {
 return function(Copy: FileContext?)
 	return {
 		WorkingDirectory = Copy and Copy.WorkingDirectory or "/",
-		HomeDirectory = Copy and Copy.HomeDirectory or "/home",
+		HomeDirectory = Copy and Copy.HomeDirectory or "/",
 	}
 end

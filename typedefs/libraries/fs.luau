@@ -12,6 +12,10 @@ function fs.Delete(Path: string): (boolean?, string)
 	return nil :: any
 end
 
+function fs.List(Path: string): ({ { Name: string, IsDirectory: boolean } }?, string)
+	return nil :: any
+end
+
 function fs.Open(Path: string, Exclusive: boolean?): (string?, string)
 	return nil :: any
 end
