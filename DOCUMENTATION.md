@@ -344,11 +344,6 @@ immediate-mode UI library, exposed as `window.Graphics.Create`) and a scoped `In
 | `GetSize` / `GetPosition` / `BringToTop` | |
 | `GetInputContext(Handle)` | Returns signals (`InputBegan`/`InputChanged`/`InputEnded`, `LastInputTypeChanged`, `WindowFocused`/`WindowFocusReleased`) and queries (`IsKeyDown`, `GetMouseLocation`, `GetKeysPressed`, etc.), all scoped to *this* window's focus state. |
 
-Two real engine gaps to know about if you're building UI: this build has no
-`Enum.AutomaticCanvasSize` (the property exists on `ScrollingFrame`, but its *value* type is
-`Enum.AutomaticSize`, not a separate enum - that's the whole fix, not a missing feature), and
-`Enum.AutomaticSize` itself works fine on ordinary `GuiObject`s.
-
 #### `stdio`
 
 Raw output, without the auto-appended newline that `print`/`warn` add (see the table above). Use
