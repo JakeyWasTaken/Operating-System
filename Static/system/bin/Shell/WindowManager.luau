@@ -73,7 +73,6 @@ function WindowManager.new(Output: Stdio): WindowManager
 	self.m_HistoryDraft = ""
 
 	window.SetFullscreen(self.m_Handle, true)
-	window.SetFocused(self.m_Handle, true)
 
 	-- TextBox doesn't surface Up/Down as editing events, so we watch raw key
 	-- input ourselves just for those two keys and drive history navigation.

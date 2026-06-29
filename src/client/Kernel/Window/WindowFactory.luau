@@ -11,6 +11,9 @@ function WindowFactory.CreateWindow(OwnerPid: number): CWindow
     local Window = CWindow.new(OwnerPid)
     AllWindows[Window:GetHandle()] = Window
 
+    Window:BringToTop()
+    WindowFactory.SetFocused(Window:GetHandle(), true)
+
     return Window
 end
 

@@ -80,8 +80,6 @@ function Editor.Open(Path: string)
 	local InputContext = assert(window.GetInputContext(Handle))
 
 	window.SetFullscreen(Handle, true)
-	window.SetFocused(Handle, true)
-	window.BringToTop(Handle)
 
 	local InitialContent = ""
 	if Exists(Path) then
@@ -195,6 +193,14 @@ function Editor.Open(Path: string)
 									(TextBox :: TextBox):CaptureFocus()
 								end)
 							end
+						end,
+
+						FocusLost = function(EnterPressed: boolean)
+							if not TextBox or not window.IsFocused(Handle) then
+								return
+							end
+
+							TextBox:CaptureFocus()
 						end,
 
 						-- Constant, so JDI writes it once at creation and never again -
