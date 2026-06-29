@@ -1,6 +1,6 @@
+local encoding = require("@osiris/encoding")
 local fs = require("@osiris/fs")
 local process = require("@osiris/process")
-local toml = require("@osiris/toml")
 
 local SERVICES_DIRECTORY = "/system/services"
 local RESTART_WINDOW = 10
@@ -23,7 +23,7 @@ local function LoadService(FileName: string)
 	local Contents = fs.Read(Handle)
 	fs.Close(Handle)
 
-	local Data, ParseError = toml.Parse(Contents)
+	local Data, ParseError = encoding.ParseTOML(Contents)
 	if not Data then
 		return nil, ParseError
 	end

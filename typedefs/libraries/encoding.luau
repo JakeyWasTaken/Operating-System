@@ -52,4 +52,8 @@ function encoding.OpenTar(Input: buffer): TarNode
 	return nil :: any
 end
 
+function encoding.ParseTOML(Source: string): ({ [string]: any }?, string)
+	return nil :: any
+end
+
 return encoding
