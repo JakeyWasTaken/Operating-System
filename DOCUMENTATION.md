@@ -379,12 +379,7 @@ Buffer/compression/hashing primitives, plus a tar archive reader.
 | `GetDecompressedBufferSize` | `(Input: buffer, Algorithm) -> number?` |
 | `ComputeBufferHash` / `ComputeStringHash` | `(Input, Algorithm: Enum.HashAlgorithm) -> buffer/string` |
 | `OpenTar` | `(Input: buffer) -> TarNode` - parses a raw tar archive into a tree of `{type: "file", name, path, size, data, ...}` / `{type: "directory", name, path, children}` nodes |
-
-#### `toml`
-
-| Function | Signature |
-| --- | --- |
-| `Parse` | `(Source: string) -> ({[string]: any}?, string)` |
+| `ParseTOML` | `(Source: string) -> ({[string]: any}?, string)` - parses a toml string into a lua table |
 
 #### First-party userspace libraries (`/system/lib`)
 
