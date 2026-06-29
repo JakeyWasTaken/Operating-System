@@ -63,7 +63,7 @@ function window.SetDrawCallback(ScopedHandle: string, Callback: (() -> unknown)?
 	return nil :: any
 end
 
-function window.Focus(ScopedHandle: string, Focused: boolean): (boolean?, string)
+function window.SetFocused(ScopedHandle: string, Focused: boolean): (boolean?, string)
 	return nil :: any
 end
 

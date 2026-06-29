@@ -15,6 +15,7 @@ do -- require file checks
 	reqAndCheck("./filesystem/create_file.luau")
 	reqAndCheck("./filesystem/create_directory.luau")
 	reqAndCheck("./filesystem/open_close.luau")
+	reqAndCheck("./filesystem/resolve_working_directory.luau")
 	reqAndCheck("./filesystem/read_write.luau")
 	reqAndCheck("./filesystem/exclusive_lock.luau")
 	reqAndCheck("./filesystem/metadata.luau")

@@ -27,3 +27,5 @@ Install nodemon:
 Run `lune run scripts/start-dev` in your terminal to build and sync to rojo.
 
 If you need debug profiling then change the `DEBUG_PROFILING` variable in `scripts/darkluaconfig` this is also where you will find all macros
+
+# [Documentation](./DOCUMENTATION.md)

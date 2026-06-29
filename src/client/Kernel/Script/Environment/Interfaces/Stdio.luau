@@ -20,7 +20,7 @@ return function(Context: EnvironmentContext)
             end
 
             if Data then
-                Process.StdOut:Write(Data)
+                Process.StdOut:Write(Data .. "\n")
             end
 
             Callback(...)
@@ -31,7 +31,7 @@ return function(Context: EnvironmentContext)
         return function(Message: any, Level: number?)
             local Data = tostring(Message)
             if Data then
-                Process.StdErr:Write(Data)
+                Process.StdErr:Write(Data .. "\n")
             end
 
             Callback(Message, Level)

@@ -18,12 +18,6 @@ return function()
 				expect(p:GetParts()[1].Type).to.equal("Root")
 			end)
 
-			it("parses a bare name (no prefix) as Root", function()
-				local p = CFilePath.new("foo/bar")
-				expect(p:IsValid()).to.equal(true)
-				expect(p:GetParts()[1].Type).to.equal("Root")
-			end)
-
 			it("parses the root alone with no further parts", function()
 				local p = CFilePath.new("/")
 				expect(p:IsValid()).to.equal(true)
@@ -53,6 +47,14 @@ return function()
 		end)
 
 		describe("Relative paths", function()
+			it("parses a bare name (no prefix) as Relative", function()
+				local p = CFilePath.new("foo/bar")
+				expect(p:IsValid()).to.equal(true)
+				-- Relative paths carry no leading marker part.
+				expect(p:GetParts()[1].Type).to.equal("Enter")
+				expect(p:GetParts()[1].Name).to.equal("foo")
+			end)
+
 			it("parses a leading dot with no leading marker part", function()
 				local p = CFilePath.new("./folder/file")
 				expect(p:IsValid()).to.equal(true)
@@ -68,11 +70,14 @@ return function()
 				expect(Parts[2].Name).to.equal("folder")
 			end)
 
-			it("does NOT treat a dot-prefixed folder name as Relative", function()
+			it("does NOT treat a dot-prefixed folder name as the relative marker", function()
+				-- ".folder" is a literal folder name, not the "." relative marker,
+				-- so it is kept as the first step rather than being stripped.
 				local p = CFilePath.new(".folder/child")
 				local Parts = p:GetParts()
-				expect(Parts[1].Type).to.equal("Root")
-				expect(Parts[2].Name).to.equal(".folder")
+				expect(Parts[1].Type).to.equal("Enter")
+				expect(Parts[1].Name).to.equal(".folder")
+				expect(Parts[2].Name).to.equal("child")
 			end)
 
 			it("strips the leading dot but keeps subsequent parts", function()

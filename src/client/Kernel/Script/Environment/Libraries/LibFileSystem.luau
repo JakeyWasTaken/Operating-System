@@ -41,23 +41,9 @@ end
 return {
 	Name = "fs",
 	Enabled = true,
-	MakeLibrary = function(LibraryPID: number, ScriptPath: CFilePath)
-        -- For relative files we expand using script path here,
-        -- we don't use file context just for clarity reasons
-        local function ResolveScriptPath(PathString: string): CFilePath
-            local RequestedPath = CFilePath.new(PathString)
-            if not RequestedPath:IsValid() then
-                return RequestedPath
-            end
-
-            local FirstPart = RequestedPath:GetParts()[1]
-            if not FirstPart or (FirstPart.Type ~= "Root" and FirstPart.Type ~= "Home") then
-                return ScriptPath:Append(PathString)
-            end
-
-            return RequestedPath
-        end
-
+	MakeLibrary = function(LibraryPID: number)
+        -- Paths are handed straight to the file system, which resolves anything
+        -- relative against the process's working directory (see CFilePath:Resolve).
 		return {
             -- ----------------------------- Tree Operations ----------------------------- --
 
@@ -77,7 +63,7 @@ return {
                     return nil, "no active file system"
                 end
 
-                local Result = FileSystem:CreateFile(ResolveScriptPath(Path), Process.FileContext)
+                local Result = FileSystem:CreateFile(CFilePath.new(Path), Process.FileContext)
                 if not Result.Success then
                     return nil, Result.Reason
                 end
@@ -101,7 +87,7 @@ return {
                     return nil, "no active file system"
                 end
 
-                local Result = FileSystem:CreateDirectory(ResolveScriptPath(Path), Process.FileContext)
+                local Result = FileSystem:CreateDirectory(CFilePath.new(Path), Process.FileContext)
                 if not Result.Success then
                     return nil, Result.Reason
                 end
@@ -129,7 +115,7 @@ return {
                     return nil, "no active file system"
                 end
 
-                local Node = FileSystem:ResolvePath(ResolveScriptPath(Path), Process.FileContext)
+                local Node = FileSystem:ResolvePath(CFilePath.new(Path), Process.FileContext)
                 if not Node then
                     return nil, `"{Path}" does not exist`
                 end
@@ -158,7 +144,7 @@ return {
                     return nil, "no active file system"
                 end
 
-                local Node = FileSystem:ResolvePath(ResolveScriptPath(Path), Process.FileContext)
+                local Node = FileSystem:ResolvePath(CFilePath.new(Path), Process.FileContext)
                 if not Node then
                     return nil, `"{Path}" does not exist`
                 end
@@ -196,7 +182,7 @@ return {
                     return nil, "no active file system"
                 end
 
-                local RequestedPath = ResolveScriptPath(Path)
+                local RequestedPath = CFilePath.new(Path)
                 if not RequestedPath:IsValid() then
                     return nil, `"{Path}" is not a valid path`
                 end
@@ -458,7 +444,7 @@ return {
                     return nil, "cannot move the root"
                 end
 
-                local RequestedPath = ResolveScriptPath(DestinationPath)
+                local RequestedPath = CFilePath.new(DestinationPath)
                 if not RequestedPath:IsValid() then
                     return nil, `"{DestinationPath}" is not a valid path`
                 end

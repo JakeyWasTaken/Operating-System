@@ -18,7 +18,7 @@ type FileHandle = string
 type PID = number
 
 export type NodeMetadata = {
-	CreatedAt: number,
+	CreatedAt: number, -- This should be a UNIX time stamp
 }
 
 export type INode = {
@@ -57,7 +57,7 @@ export type IFile = {
 	GetSize: (self: IFile) -> number,
 
 	--- Metadata about this file.
-	GetMetadata: (self: INode) -> NodeMetadata & { UpdatedAt: number },
+	GetMetadata: (self: INode) -> NodeMetadata & { UpdatedAt: number --[[ This should be a UNIX time stamp ]] },
 } & INode
 
 export type IDirectory = {

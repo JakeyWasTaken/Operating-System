@@ -115,7 +115,9 @@ function CFilePath.new(String: string)
 	end
 
 	if self.m_RootType == "None" then
-		self.m_RootType = "Root"
+		-- No explicit prefix (e.g. "foo/bar") means relative to the working
+		-- directory, exactly like "./foo/bar".
+		self.m_RootType = "Relative"
 		RemovePrefix = false
 	end
 

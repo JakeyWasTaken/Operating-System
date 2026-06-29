@@ -1,6 +1,7 @@
 const JDI = require("@vendor/JustDrawIt")
 const JDICreate = require("@vendor/JustDrawIt/Create")
 const CWindow = require("@kernel/Window/Window")
+const WindowFactory = require("@kernel/Window/WindowFactory")
 const ProcessScheduler = require("@kernel/Process/ProcessScheduler")
 
 const e = JDI.create
@@ -38,21 +39,19 @@ return function(Handle: string, Window: CWindow)
             local DrawCallback = Window:GetDrawCallback()
             if DrawCallback then
                 local Ok, Result = ProcessScheduler.RunNonBlocking(DrawCallback)
-                if not Ok then
-                    Error = tostring(Result) or "Unable to cast error to string"
-                end
-
                 if is_vnode(Result) then
                     return Result
-                else
+                elseif Ok then
                     Error = "Return value was not a VNode"
+                else
+                    Error = tostring(Result) or "Unable to cast error to string"
                 end
             else
                 Error = "Defines no draw callback"
             end
 
             return e "TextLabel" {
-                Text = `Failed to draw "{Handle}"\n\n{Error}`,
+                Text = `Failed to draw window "{Handle}"\n\n{Error}`,
                 Size = UDim2.fromScale(1, 1),
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.fromScale(0.5, 0.5),
@@ -66,5 +65,24 @@ return function(Handle: string, Window: CWindow)
                 TextYAlignment = Enum.TextYAlignment.Center,
             }
         end,
+
+        -- When we interact with a window, we need to focus it
+        e "TextButton" {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            AutoButtonColor = false,
+            ClipsDescendants = false,
+            Selectable = false,
+            Text = "",
+
+            InputBegan = function(Input: InputObject)
+                if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Keyboard then
+                    return
+                end
+
+                WindowFactory.SetFocused(Handle, true)
+            end
+        }
     }
 end

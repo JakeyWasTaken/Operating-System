@@ -32,7 +32,7 @@ function CNode.new()
     self.m_Name = ""
     self.m_Parent = nil
     self.m_IsRoot = false
-    self.m_CreatedAt = os.clock()
+    self.m_CreatedAt = tick()
 
     return self
 end

@@ -44,7 +44,7 @@ function CFile:Write(Data: string, Offset: number?)
         self.m_Contents = self.m_Contents:sub(1, Offset) .. Data .. self.m_Contents:sub(Offset + #Data + 1)
     end
 
-    self.m_UpdatedAt = os.clock()
+    self.m_UpdatedAt = tick()
 end
 
 function CFile:GetSize()

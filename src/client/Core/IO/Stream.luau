@@ -60,6 +60,10 @@ end
 function CIOStream:SandboxReader()
     return {
         Read = function(_, ChunkSize)
+            if Class.IsDestroyed(self) then
+                return nil
+            end
+
             return self:Read(ChunkSize)
         end
     }
@@ -68,10 +72,18 @@ end
 function CIOStream:SandboxWriter()
     return {
         Write = function(_, Data)
+            if Class.IsDestroyed(self) then
+                return nil
+            end
+
             return self:Write(Data)
         end,
 
         Close = function()
+            if Class.IsDestroyed(self) then
+                return
+            end
+
             self:Close()
         end
     }

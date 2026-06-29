@@ -1,10 +1,11 @@
 local process = require("@osiris/process")
 
--- StdOut carries exactly what the spawned script printed, and Status() blocks
--- until termination and returns the code passed to exit()
+-- StdOut carries exactly what the spawned script printed (print appends a
+-- trailing newline), and Status() blocks until termination and returns the
+-- code passed to exit()
 do
 	local Spawned = process.Spawn("./to_spawn.luau", {}, {}, {})
-	assert(Spawned.StdOut:Read() == "Hello!", "StdOut should carry exactly what the spawned script printed")
+	assert(Spawned.StdOut:Read() == "Hello!\n", "StdOut should carry exactly what the spawned script printed")
 	assert(Spawned.Status() == 0, "Status() should return the exact exit code passed to exit()")
 end
 
@@ -25,10 +26,10 @@ do
 end
 
 -- An uncaught error() in the spawned script's main thread writes to StdErr
--- and the process exits with code -1
+-- (with a trailing newline appended) and the process exits with code -1
 do
 	local Spawned = process.Spawn("./to_spawn_stderr.luau", {}, {}, {})
-	assert(Spawned.StdErr:Read() == "boom", "error() should write its message to the process's StdErr stream")
+	assert(Spawned.StdErr:Read() == "boom\n", "error() should write its message to the process's StdErr stream")
 	assert(Spawned.Status() == -1, "an uncaught error in the main thread should result in a -1 exit code")
 end
 
@@ -121,6 +122,15 @@ do
 	local ExitCode = 101
 	local Spawned = process.Spawn("./to_spawn_environment.luau", { ExitCode = tostring(ExitCode) }, {}, {})
 	assert(Spawned.Status() == ExitCode, "a spawned process should be able to take arguments and use them")
+end
+
+-- The stdio library's StdOut/StdError write exactly what's passed, unlike
+-- print/warn which now append a trailing newline
+do
+	local Spawned = process.Spawn("./to_spawn_stdio_library.luau", {}, {}, {})
+	assert(Spawned.StdOut:Read() == "raw-out", "stdio.StdOut should not append a trailing newline")
+	assert(Spawned.StdErr:Read() == "raw-err", "stdio.StdError should not append a trailing newline")
+	assert(Spawned.Status() == 0, "the stdio library should not affect the process's exit code")
 end
 
 return "OK"

@@ -11,6 +11,9 @@ const Libraries = {
     require("../Libraries/LibWindow"),
     require("../Libraries/LibTest"),
     require("../Libraries/LibTOML"),
+	require("../Libraries/LibNetwork"),
+	require("../Libraries/LibEncoding"),
+	require("../Libraries/LibStdio")
 }
 
 type EnvironmentContext = EnvironmentContext.EnvironmentContext

@@ -6,10 +6,10 @@ assert(Setup ~= nil, "setup: open the file to write its initial contents")
 fs.Write(Setup, "hello", 0)
 fs.Close(Setup)
 
--- Open resolves an existing file relative to the script's own location
+-- Open resolves an existing file relative to the working directory
 do
 	local Opened = fs.Open("./open_close_a.txt")
-	assert(Opened ~= nil, "Open should resolve a path relative to the script")
+	assert(Opened ~= nil, "Open should resolve a path relative to the working directory")
 	assert(fs.Read(Opened) == "hello", "Open should hand back the same file that was written to during setup")
 	fs.Close(Opened)
 end
